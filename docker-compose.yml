@@ -1,0 +1,60 @@
+# One-command full stack: PostgreSQL 14 + FastAPI backend + React frontend.
+#
+#   docker compose up --build
+#
+# Then open:
+#   Frontend:      http://localhost:5173
+#   API docs:      http://localhost:8020/docs
+#   Postgres:      localhost:5432 (sportsleague_user / sportsleague_pass / sportsleague_db)
+#
+# First boot: the backend container waits for Postgres, runs Alembic
+# migrations, and seeds demo data (one login per role) automatically -
+# see backend/docker-entrypoint.sh. Nothing else to run by hand.
+services:
+  db:
+    image: postgres:14
+    container_name: sportsleague_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sportsleague_db
+      POSTGRES_USER: sportsleague_user
+      POSTGRES_PASSWORD: sportsleague_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - sportsleague_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sportsleague_user -d sportsleague_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: sportsleague_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://sportsleague_user:sportsleague_pass@db:5432/sportsleague_db
+      JWT_SECRET_KEY: change-this-to-a-long-random-string
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_MINUTES: "480"
+      ENVIRONMENT: docker
+    ports:
+      - "8020:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: sportsleague_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8020/api/v1
+    ports:
+      - "5173:5173"
+
+volumes:
+  sportsleague_pgdata:

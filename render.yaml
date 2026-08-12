@@ -1,0 +1,25 @@
+# Render Blueprint — deploys the FastAPI backend.
+#
+# 1. Push this repo to GitHub.
+# 2. On Render: New -> Blueprint, connect the repo.
+# 3. Set the env vars below (marked sync: false) in the Render dashboard.
+#
+# Postgres: use Neon (free cloud Postgres) and paste its connection string
+# into DATABASE_URL. Schema is applied automatically on deploy via
+# `alembic upgrade head` in the start command.
+services:
+  - type: web
+    name: sportsleague-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
