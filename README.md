@@ -75,7 +75,7 @@ cp .env.example .env
 npm run dev
 ```
 Then open http://localhost:5173 and log in with any seeded account (e.g.
-`system.administrator@example.com` / `Password123!`) — the login page shows
+`system.administrator@gmail.com` / `Password123!`) — the login page shows
 all six demo logins as quick-pick buttons.
 
 ## Contract compliance (unchanged from the backend-only delivery)
@@ -113,9 +113,9 @@ run standalone, but not meant to be handed over as part of the deliverable.
 
 ## Trying the RBAC out
 
-Log in as `player@example.com` (password `Password123!`) and try to
+Log in as `player@gmail.com` (password `Password123!`) and try to
 schedule a match — the button won't even render, because the frontend
-mirrors the permission matrix. Log in as `league.administrator@example.com`
+mirrors the permission matrix. Log in as `league.administrator@gmail.com`
 and try the same action against a season that's already `Cancelled` — the
 button renders, but the backend rejects it with a 400 explaining the status
 transition isn't allowed. Both layers are doing real work, but only the

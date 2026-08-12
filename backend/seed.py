@@ -40,7 +40,7 @@ def main():
             user = User(
                 id=uuid.uuid4() if role != "System Administrator" else SYSTEM_USER_ID,
                 organization_id=ORG_ID,
-                email=f"{slug}@example.com",
+                email=f"{slug}@gmail.com",
                 hashed_password=hash_password("Password123!"),
                 full_name=role,
                 role=role,
@@ -127,7 +127,7 @@ def main():
         print(f"Organization ID: {ORG_ID}")
         print("Login with any of these (password: Password123!):")
         for role in roles:
-            print(f"  - {role.lower().replace(' ', '.')}@example.com  ({role})")
+            print(f"  - {role.lower().replace(' ', '.')}@gmail.com  ({role})")
     except Exception:
         db.rollback()
         raise

@@ -1,5 +1,5 @@
--- ============================================================================
--- Sample data — one organization, one login per role, and a small set of
+﻿-- ============================================================================
+-- Sample data â€” one organization, one login per role, and a small set of
 -- leagues/seasons/divisions/teams/players/referees/matches/results so the
 -- frontend has something real to show immediately after setup.
 --
@@ -47,12 +47,12 @@ BEGIN
     INSERT INTO organizations (id, name) VALUES (v_org_id, 'Metro Manila Sports League');
 
     INSERT INTO users (id, organization_id, email, hashed_password, full_name, role) VALUES
-        (v_admin_id,        v_org_id, 'system.administrator@example.com', v_password_hash, 'System Administrator', 'System Administrator'),
-        (v_league_admin_id, v_org_id, 'league.administrator@example.com', v_password_hash, 'League Administrator', 'League Administrator'),
-        (v_season_mgr_id,   v_org_id, 'season.manager@example.com',       v_password_hash, 'Season Manager',       'Season Manager'),
-        (v_team_mgr_id,     v_org_id, 'team.manager@example.com',         v_password_hash, 'Team Manager',         'Team Manager'),
-        (v_referee_user_id, v_org_id, 'referee@example.com',              v_password_hash, 'Referee User',         'Referee'),
-        (v_player_user_id,  v_org_id, 'player@example.com',               v_password_hash, 'Player User',          'Player');
+        (v_admin_id,        v_org_id, 'system.administrator@gmail.com', v_password_hash, 'System Administrator', 'System Administrator'),
+        (v_league_admin_id, v_org_id, 'league.administrator@gmail.com', v_password_hash, 'League Administrator', 'League Administrator'),
+        (v_season_mgr_id,   v_org_id, 'season.manager@gmail.com',       v_password_hash, 'Season Manager',       'Season Manager'),
+        (v_team_mgr_id,     v_org_id, 'team.manager@gmail.com',         v_password_hash, 'Team Manager',         'Team Manager'),
+        (v_referee_user_id, v_org_id, 'referee@gmail.com',              v_password_hash, 'Referee User',         'Referee'),
+        (v_player_user_id,  v_org_id, 'player@gmail.com',               v_password_hash, 'Player User',          'Player');
 
     -- Leagues
     INSERT INTO sportsleague_leagues (id, organization_id, name, sport_type, description, status, created_by, updated_by) VALUES
