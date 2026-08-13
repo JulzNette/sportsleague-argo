@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
+from app.core.errors import register_exception_handlers
 from app.routers import (
     auth, divisions, leagues, matches, players, referees,
     reports, results, seasons, standings, teams,
@@ -22,6 +23,8 @@ app = FastAPI(
     ),
     version="1.0.0",
 )
+
+register_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
