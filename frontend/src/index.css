@@ -16,6 +16,22 @@ body {
 .badge-danger  { @apply bg-rose-50 text-rose-700 border-rose-200; }
 .badge-neutral { @apply bg-gray-100 text-gray-600 border-gray-200; }
 
+.badge-sport-basketball    { @apply bg-orange-50 text-orange-700 border-orange-200; }
+.badge-sport-volleyball    { @apply bg-amber-50 text-amber-700 border-amber-200; }
+.badge-sport-badminton     { @apply bg-emerald-50 text-emerald-700 border-emerald-200; }
+.badge-sport-soccer        { @apply bg-sky-50 text-sky-700 border-sky-200; }
+.badge-sport-football      { @apply bg-blue-50 text-blue-700 border-blue-200; }
+.badge-sport-baseball      { @apply bg-rose-50 text-rose-700 border-rose-200; }
+.badge-sport-softball      { @apply bg-pink-50 text-pink-700 border-pink-200; }
+.badge-sport-tennis        { @apply bg-lime-50 text-lime-700 border-lime-200; }
+.badge-sport-table-tennis  { @apply bg-teal-50 text-teal-700 border-teal-200; }
+.badge-sport-swimming      { @apply bg-cyan-50 text-cyan-700 border-cyan-200; }
+.badge-sport-athletics     { @apply bg-purple-50 text-purple-700 border-purple-200; }
+.badge-sport-esports       { @apply bg-indigo-50 text-indigo-700 border-indigo-200; }
+.badge-sport-chess         { @apply bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200; }
+.badge-sport-darts         { @apply bg-slate-200 text-slate-700 border-slate-300; }
+.badge-sport-other         { @apply bg-gray-100 text-gray-600 border-gray-200; }
+
 .btn {
   @apply inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-sm font-semibold cursor-pointer border border-transparent transition;
 }

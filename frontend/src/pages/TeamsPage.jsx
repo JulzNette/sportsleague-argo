@@ -9,6 +9,8 @@ import Modal from '../components/Modal'
 import Field from '../components/Field'
 import Badge from '../components/Badge'
 import ErrorBanner from '../components/ErrorBanner'
+import { SportBadge, SportFilter } from '../components/SportControls'
+import { buildSportMaps } from '../lib/sports'
 
 const EMPTY = { division_id: '', name: '', coach_name: '', contact_email: '', contact_phone: '', status: 'Active' }
 
@@ -17,12 +19,19 @@ export default function TeamsPage() {
   const qc = useQueryClient()
   const { data: teams, isLoading } = useQuery({ queryKey: ['teams'], queryFn: () => endpoints.teams.list().then((r) => r.data) })
   const { data: divisions } = useQuery({ queryKey: ['divisions'], queryFn: () => endpoints.divisions.list().then((r) => r.data) })
+  const { data: seasons } = useQuery({ queryKey: ['seasons'], queryFn: () => endpoints.seasons.list().then((r) => r.data) })
+  const { data: leagues } = useQuery({ queryKey: ['leagues'], queryFn: () => endpoints.leagues.list().then((r) => r.data) })
+
+  const { sportOf, sports } = buildSportMaps({ leagues, seasons, divisions, teams })
 
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [error, setError] = useState(null)
+  const [sportFilter, setSportFilter] = useState('')
 
   const divisionName = (id) => divisions?.find((d) => d.id === id)?.name || '—'
+
+  const visibleTeams = sportFilter ? teams?.filter((t) => sportOf.team(t.id) === sportFilter) : teams
 
   const createMut = useMutation({
     mutationFn: (data) => endpoints.teams.create(data),
@@ -57,21 +66,30 @@ export default function TeamsPage() {
         )}
       />
       {isLoading ? <p className="text-sm text-gray-500">Loading...</p> : (
-        <DataTable
-          columns={[
-            { key: 'name', label: 'Name', render: (r) => <span className="font-semibold text-gray-900">{r.name}</span> },
-            { key: 'division', label: 'Division', render: (r) => divisionName(r.division_id) },
-            { key: 'coach_name', label: 'Coach' },
-            { key: 'contact_email', label: 'Contact' },
-            { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
-          ]}
-          rows={teams}
-          actions={(row) => [
-            ...(can(role, 'team.update') ? [{ label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) }] : []),
-            ...(can(role, 'team.delete') ? [{ label: 'Delete', icon: 'bi-trash', onClick: () => { if (confirm(`Delete "${row.name}"?`)) deleteMut.mutate(row.id) } }] : []),
-          ]}
-          emptyLabel="No teams yet."
-        />
+        <>
+          {sports.length > 0 && (
+            <div className="card p-3.5 mb-4 flex gap-3 flex-wrap items-center">
+              <label className="text-sm font-medium text-gray-700">Sport</label>
+              <SportFilter sports={sports} value={sportFilter} onChange={setSportFilter} />
+            </div>
+          )}
+          <DataTable
+            columns={[
+              { key: 'name', label: 'Name', render: (r) => <span className="font-semibold text-gray-900">{r.name}</span> },
+              { key: 'sport', label: 'Sport', render: (r) => <SportBadge sport={sportOf.team(r.id)} /> },
+              { key: 'division', label: 'Division', render: (r) => divisionName(r.division_id) },
+              { key: 'coach_name', label: 'Coach' },
+              { key: 'contact_email', label: 'Contact' },
+              { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
+            ]}
+            rows={visibleTeams}
+            actions={(row) => [
+              ...(can(role, 'team.update') ? [{ label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) }] : []),
+              ...(can(role, 'team.delete') ? [{ label: 'Delete', icon: 'bi-trash', onClick: () => { if (confirm(`Delete "${row.name}"?`)) deleteMut.mutate(row.id) } }] : []),
+            ]}
+            emptyLabel="No teams yet."
+          />
+        </>
       )}
 
       {modal && (

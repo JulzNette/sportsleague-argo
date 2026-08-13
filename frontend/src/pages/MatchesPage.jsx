@@ -10,6 +10,8 @@ import Modal from '../components/Modal'
 import Field from '../components/Field'
 import Badge from '../components/Badge'
 import ErrorBanner from '../components/ErrorBanner'
+import { SportBadge, SportFilter } from '../components/SportControls'
+import { buildSportMaps } from '../lib/sports'
 
 const EMPTY = {
   season_id: '', division_id: '', home_team_id: '', away_team_id: '', referee_id: '',
@@ -24,16 +26,22 @@ export default function MatchesPage() {
   const { data: seasons } = useQuery({ queryKey: ['seasons'], queryFn: () => endpoints.seasons.list().then((r) => r.data) })
   const { data: divisions } = useQuery({ queryKey: ['divisions'], queryFn: () => endpoints.divisions.list().then((r) => r.data) })
   const { data: teams } = useQuery({ queryKey: ['teams'], queryFn: () => endpoints.teams.list().then((r) => r.data) })
+  const { data: leagues } = useQuery({ queryKey: ['leagues'], queryFn: () => endpoints.leagues.list().then((r) => r.data) })
   const { data: referees } = useQuery({ queryKey: ['referees'], queryFn: () => endpoints.referees.list().then((r) => r.data), enabled: can(role, 'referee.manage') })
+
+  const { sportOf, sports } = buildSportMaps({ leagues, seasons, divisions, teams })
 
   const [modal, setModal] = useState(null) // 'create' | { type: 'status'|'result', match }
   const [form, setForm] = useState(EMPTY)
   const [resultForm, setResultForm] = useState(EMPTY_RESULT)
   const [statusChoice, setStatusChoice] = useState('')
   const [error, setError] = useState(null)
+  const [sportFilter, setSportFilter] = useState('')
 
   const teamName = (id) => teams?.find((t) => t.id === id)?.name || '—'
   const refereeName = (id) => referees?.find((r) => r.id === id)?.full_name || 'Unassigned'
+
+  const visibleMatches = sportFilter ? matches?.filter((m) => sportOf.division(m.division_id) === sportFilter) : matches
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['matches'] })
 
@@ -63,23 +71,32 @@ export default function MatchesPage() {
         )}
       />
       {isLoading ? <p className="text-sm text-gray-500">Loading...</p> : (
-        <DataTable
-          columns={[
-            { key: 'matchup', label: 'Matchup', render: (r) => <span className="font-semibold text-gray-900">{teamName(r.home_team_id)} vs {teamName(r.away_team_id)}</span> },
-            { key: 'when', label: 'When', render: (r) => `${r.scheduled_date} ${r.scheduled_time}` },
-            { key: 'venue', label: 'Venue' },
-            { key: 'round_number', label: 'Round' },
-            { key: 'match_type', label: 'Type' },
-            { key: 'referee_id', label: 'Referee', render: (r) => refereeName(r.referee_id) },
-            { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
-          ]}
-          rows={matches}
-          actions={(row) => [
-            ...(can(role, 'match.update') ? [{ label: 'Change status', icon: 'bi-arrow-repeat', onClick: () => openStatus(row) }] : []),
-            ...(can(role, 'result.submit') && !row.result && ['In Progress', 'Scheduled'].includes(row.status) ? [{ label: 'Submit result', icon: 'bi-clipboard-check', onClick: () => openResult(row) }] : []),
-          ]}
-          emptyLabel="No matches scheduled yet."
-        />
+        <>
+          {sports.length > 0 && (
+            <div className="card p-3.5 mb-4 flex gap-3 flex-wrap items-center">
+              <label className="text-sm font-medium text-gray-700">Sport</label>
+              <SportFilter sports={sports} value={sportFilter} onChange={setSportFilter} />
+            </div>
+          )}
+          <DataTable
+            columns={[
+              { key: 'matchup', label: 'Matchup', render: (r) => <span className="font-semibold text-gray-900">{teamName(r.home_team_id)} vs {teamName(r.away_team_id)}</span> },
+              { key: 'sport', label: 'Sport', render: (r) => <SportBadge sport={sportOf.division(r.division_id)} /> },
+              { key: 'when', label: 'When', render: (r) => `${r.scheduled_date} ${r.scheduled_time}` },
+              { key: 'venue', label: 'Venue' },
+              { key: 'round_number', label: 'Round' },
+              { key: 'match_type', label: 'Type' },
+              { key: 'referee_id', label: 'Referee', render: (r) => refereeName(r.referee_id) },
+              { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
+            ]}
+            rows={visibleMatches}
+            actions={(row) => [
+              ...(can(role, 'match.update') ? [{ label: 'Change status', icon: 'bi-arrow-repeat', onClick: () => openStatus(row) }] : []),
+              ...(can(role, 'result.submit') && !row.result && ['In Progress', 'Scheduled'].includes(row.status) ? [{ label: 'Submit result', icon: 'bi-clipboard-check', onClick: () => openResult(row) }] : []),
+            ]}
+            emptyLabel="No matches scheduled yet."
+          />
+        </>
       )}
 
       {modal === 'create' && (

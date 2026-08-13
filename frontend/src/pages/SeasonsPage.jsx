@@ -10,6 +10,8 @@ import Modal from '../components/Modal'
 import Field from '../components/Field'
 import Badge from '../components/Badge'
 import ErrorBanner from '../components/ErrorBanner'
+import { SportBadge, SportFilter } from '../components/SportControls'
+import { buildSportMaps } from '../lib/sports'
 
 const EMPTY = { league_id: '', name: '', start_date: '', end_date: '', format: 'Round Robin', status: 'Draft' }
 
@@ -22,8 +24,12 @@ export default function SeasonsPage() {
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [error, setError] = useState(null)
+  const [sportFilter, setSportFilter] = useState('')
 
   const leagueName = (id) => leagues?.find((l) => l.id === id)?.name || '—'
+  const { sportOf, sports } = buildSportMaps({ leagues, seasons })
+
+  const visibleSeasons = sportFilter ? seasons?.filter((s) => sportOf.league(s.league_id) === sportFilter) : seasons
 
   const createMut = useMutation({
     mutationFn: (data) => endpoints.seasons.create(data),
@@ -59,18 +65,27 @@ export default function SeasonsPage() {
         )}
       />
       {isLoading ? <p className="text-sm text-gray-500">Loading...</p> : (
-        <DataTable
-          columns={[
-            { key: 'name', label: 'Name', render: (r) => <span className="font-semibold text-gray-900">{r.name}</span> },
-            { key: 'league', label: 'League', render: (r) => leagueName(r.league_id) },
-            { key: 'dates', label: 'Dates', render: (r) => `${r.start_date} → ${r.end_date}` },
-            { key: 'format', label: 'Format' },
-            { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
-          ]}
-          rows={seasons}
-          actions={(row) => can(role, 'season.update') ? [{ label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) }] : []}
-          emptyLabel="No seasons yet."
-        />
+        <>
+          {sports.length > 0 && (
+            <div className="card p-3.5 mb-4 flex gap-3 flex-wrap items-center">
+              <label className="text-sm font-medium text-gray-700">Sport</label>
+              <SportFilter sports={sports} value={sportFilter} onChange={setSportFilter} />
+            </div>
+          )}
+          <DataTable
+            columns={[
+              { key: 'name', label: 'Name', render: (r) => <span className="font-semibold text-gray-900">{r.name}</span> },
+              { key: 'sport', label: 'Sport', render: (r) => <SportBadge sport={sportOf.league(r.league_id)} /> },
+              { key: 'league', label: 'League', render: (r) => leagueName(r.league_id) },
+              { key: 'dates', label: 'Dates', render: (r) => `${r.start_date} → ${r.end_date}` },
+              { key: 'format', label: 'Format' },
+              { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
+            ]}
+            rows={visibleSeasons}
+            actions={(row) => can(role, 'season.update') ? [{ label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) }] : []}
+            emptyLabel="No seasons yet."
+          />
+        </>
       )}
 
       {modal && (

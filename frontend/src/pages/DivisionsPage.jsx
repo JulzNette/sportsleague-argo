@@ -9,6 +9,8 @@ import Modal from '../components/Modal'
 import Field from '../components/Field'
 import Badge from '../components/Badge'
 import ErrorBanner from '../components/ErrorBanner'
+import { SportBadge, SportFilter } from '../components/SportControls'
+import { buildSportMaps } from '../lib/sports'
 
 const EMPTY = { season_id: '', name: '', max_teams: 8, status: 'Active' }
 
@@ -17,12 +19,18 @@ export default function DivisionsPage() {
   const qc = useQueryClient()
   const { data: divisions, isLoading } = useQuery({ queryKey: ['divisions'], queryFn: () => endpoints.divisions.list().then((r) => r.data) })
   const { data: seasons } = useQuery({ queryKey: ['seasons'], queryFn: () => endpoints.seasons.list().then((r) => r.data) })
+  const { data: leagues } = useQuery({ queryKey: ['leagues'], queryFn: () => endpoints.leagues.list().then((r) => r.data) })
+
+  const { sportOf, sports } = buildSportMaps({ leagues, seasons, divisions })
 
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [error, setError] = useState(null)
+  const [sportFilter, setSportFilter] = useState('')
 
   const seasonName = (id) => seasons?.find((s) => s.id === id)?.name || '—'
+
+  const visibleDivisions = sportFilter ? divisions?.filter((d) => sportOf.season(d.season_id) === sportFilter) : divisions
 
   const createMut = useMutation({
     mutationFn: (data) => endpoints.divisions.create(data),
@@ -57,20 +65,29 @@ export default function DivisionsPage() {
         )}
       />
       {isLoading ? <p className="text-sm text-gray-500">Loading...</p> : (
-        <DataTable
-          columns={[
-            { key: 'name', label: 'Name', render: (r) => <span className="font-semibold text-gray-900">{r.name}</span> },
-            { key: 'season', label: 'Season', render: (r) => seasonName(r.season_id) },
-            { key: 'max_teams', label: 'Max Teams' },
-            { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
-          ]}
-          rows={divisions}
-          actions={(row) => [
-            ...(can(role, 'division.manage') ? [{ label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) }] : []),
-            ...(can(role, 'division.manage') ? [{ label: 'Delete', icon: 'bi-trash', onClick: () => { if (confirm(`Delete "${row.name}"?`)) deleteMut.mutate(row.id) } }] : []),
-          ]}
-          emptyLabel="No divisions yet."
-        />
+        <>
+          {sports.length > 0 && (
+            <div className="card p-3.5 mb-4 flex gap-3 flex-wrap items-center">
+              <label className="text-sm font-medium text-gray-700">Sport</label>
+              <SportFilter sports={sports} value={sportFilter} onChange={setSportFilter} />
+            </div>
+          )}
+          <DataTable
+            columns={[
+              { key: 'name', label: 'Name', render: (r) => <span className="font-semibold text-gray-900">{r.name}</span> },
+              { key: 'sport', label: 'Sport', render: (r) => <SportBadge sport={sportOf.season(r.season_id)} /> },
+              { key: 'season', label: 'Season', render: (r) => seasonName(r.season_id) },
+              { key: 'max_teams', label: 'Max Teams' },
+              { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
+            ]}
+            rows={visibleDivisions}
+            actions={(row) => [
+              ...(can(role, 'division.manage') ? [{ label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) }] : []),
+              ...(can(role, 'division.manage') ? [{ label: 'Delete', icon: 'bi-trash', onClick: () => { if (confirm(`Delete "${row.name}"?`)) deleteMut.mutate(row.id) } }] : []),
+            ]}
+            emptyLabel="No divisions yet."
+          />
+        </>
       )}
 
       {modal && (
