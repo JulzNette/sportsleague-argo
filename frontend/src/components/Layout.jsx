@@ -12,6 +12,7 @@ const NAV = [
   { to: '/standings', label: 'Standings', icon: 'bi-bar-chart-steps' },
   { to: '/referees', label: 'Referees', icon: 'bi-flag' },
   { to: '/reports', label: 'Reports', icon: 'bi-file-earmark-text' },
+  { to: '/archive', label: 'Archive', icon: 'bi-archive' },
 ]
 
 export default function Layout({ children }) {

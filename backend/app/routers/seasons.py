@@ -20,6 +20,14 @@ def list_seasons(
     return crud.list_scoped(db, Season, organization_id=user.organization_id, league_id=league_id)
 
 
+@router.get("/archived", response_model=list[SeasonOut], summary="List Archived Seasons")
+def list_archived_seasons(
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("season.view")),
+):
+    return crud.list_archived_scoped(db, Season, organization_id=user.organization_id)
+
+
 @router.get("/{season_id}", response_model=SeasonOut, summary="Get Season")
 def get_season(
     season_id: uuid.UUID,
@@ -55,3 +63,37 @@ def update_season(
             detail=f"Cannot transition season from '{obj.status}' to '{data['status']}'",
         )
     return crud.update_scoped(db, obj, user_id=user.id, data=data)
+
+
+@router.delete("/{season_id}", status_code=204, summary="Delete Season")
+def delete_season(
+    season_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("season.update")),
+):
+    obj = crud.get_scoped_or_404(db, Season, organization_id=user.organization_id, record_id=season_id)
+    crud.delete_scoped(db, obj)
+
+
+@router.post("/{season_id}/restore", response_model=SeasonOut, summary="Restore Season")
+def restore_season(
+    season_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("season.update")),
+):
+    obj = crud.get_scoped_or_404(
+        db, Season, organization_id=user.organization_id, record_id=season_id, include_archived=True
+    )
+    return crud.restore_scoped(db, obj)
+
+
+@router.delete("/{season_id}/purge", status_code=204, summary="Permanently Delete Season")
+def purge_season(
+    season_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("season.update")),
+):
+    obj = crud.get_scoped_or_404(
+        db, Season, organization_id=user.organization_id, record_id=season_id, include_archived=True
+    )
+    crud.purge_scoped(db, obj)

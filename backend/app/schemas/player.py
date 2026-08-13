@@ -21,6 +21,7 @@ class PlayerCreate(PlayerBase):
 
 
 class PlayerUpdate(BaseModel):
+    team_id: uuid.UUID | None = None
     full_name: str | None = Field(default=None, min_length=1, max_length=255)
     date_of_birth: date | None = None
     position: str | None = Field(default=None, max_length=100)

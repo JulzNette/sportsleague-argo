@@ -44,7 +44,7 @@ export default function PlayersPage() {
   function openEdit(p) { setForm(p); setError(null); setModal(p) }
   function handleSave() {
     if (modal === 'create') createMut.mutate(form)
-    else { const { team_id, ...rest } = form; updateMut.mutate({ id: modal.id, data: rest }) }
+    else updateMut.mutate({ id: modal.id, data: form })
   }
 
   return (
@@ -84,13 +84,11 @@ export default function PlayersPage() {
           </>}
         >
           <ErrorBanner error={error} />
-          {modal === 'create' && (
-            <Field label="Team">
-              <select className="input" value={form.team_id} onChange={(e) => setForm({ ...form, team_id: e.target.value })}>
-                {teams?.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-            </Field>
-          )}
+          <Field label="Team">
+            <select className="input" value={form.team_id || ''} onChange={(e) => setForm({ ...form, team_id: e.target.value })}>
+              {teams?.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </Field>
           <Field label="Full name"><input className="input" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Position"><input className="input" value={form.position || ''} onChange={(e) => setForm({ ...form, position: e.target.value })} /></Field>

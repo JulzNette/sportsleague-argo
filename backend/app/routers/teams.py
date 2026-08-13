@@ -18,6 +18,14 @@ def list_teams(
     return crud.list_scoped(db, Team, organization_id=user.organization_id, division_id=division_id)
 
 
+@router.get("/archived", response_model=list[TeamOut], summary="List Archived Teams")
+def list_archived_teams(
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("team.view")),
+):
+    return crud.list_archived_scoped(db, Team, organization_id=user.organization_id)
+
+
 @router.get("/{team_id}", response_model=TeamOut)
 def get_team(
     team_id: uuid.UUID,
@@ -57,3 +65,27 @@ def delete_team(
 ):
     obj = crud.get_scoped_or_404(db, Team, organization_id=user.organization_id, record_id=team_id)
     crud.delete_scoped(db, obj)
+
+
+@router.post("/{team_id}/restore", response_model=TeamOut, summary="Restore Team")
+def restore_team(
+    team_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("team.update")),
+):
+    obj = crud.get_scoped_or_404(
+        db, Team, organization_id=user.organization_id, record_id=team_id, include_archived=True
+    )
+    return crud.restore_scoped(db, obj)
+
+
+@router.delete("/{team_id}/purge", status_code=204, summary="Permanently Delete Team")
+def purge_team(
+    team_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("team.delete")),
+):
+    obj = crud.get_scoped_or_404(
+        db, Team, organization_id=user.organization_id, record_id=team_id, include_archived=True
+    )
+    crud.purge_scoped(db, obj)

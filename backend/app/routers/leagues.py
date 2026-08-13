@@ -18,6 +18,14 @@ def list_leagues(
     return crud.list_scoped(db, League, organization_id=user.organization_id)
 
 
+@router.get("/archived", response_model=list[LeagueOut], summary="List Archived Leagues")
+def list_archived_leagues(
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("league.view")),
+):
+    return crud.list_archived_scoped(db, League, organization_id=user.organization_id)
+
+
 @router.get("/{league_id}", response_model=LeagueOut, summary="Get League")
 def get_league(
     league_id: uuid.UUID,
@@ -57,3 +65,27 @@ def delete_league(
 ):
     obj = crud.get_scoped_or_404(db, League, organization_id=user.organization_id, record_id=league_id)
     crud.delete_scoped(db, obj)
+
+
+@router.post("/{league_id}/restore", response_model=LeagueOut, summary="Restore League")
+def restore_league(
+    league_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("league.update")),
+):
+    obj = crud.get_scoped_or_404(
+        db, League, organization_id=user.organization_id, record_id=league_id, include_archived=True
+    )
+    return crud.restore_scoped(db, obj)
+
+
+@router.delete("/{league_id}/purge", status_code=204, summary="Permanently Delete League")
+def purge_league(
+    league_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("league.delete")),
+):
+    obj = crud.get_scoped_or_404(
+        db, League, organization_id=user.organization_id, record_id=league_id, include_archived=True
+    )
+    crud.purge_scoped(db, obj)

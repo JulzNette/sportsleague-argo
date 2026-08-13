@@ -43,3 +43,6 @@ class OrgAuditMixin:
     # Loose UUIDs deliberately - no FK to the users table (owned by another module).
     created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     updated_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    # Soft-delete marker. NULL = active, set = archived. Lists hide archived rows;
+    # /archived endpoints list them, /restore clears it, /purge hard-deletes.
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

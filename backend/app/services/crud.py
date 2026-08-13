@@ -4,6 +4,7 @@ tenant scoping (organization_id) and audit stamping (created_by/updated_by)
 are applied in exactly one place instead of being re-typed in every router.
 """
 import uuid
+from datetime import datetime, timezone
 from typing import TypeVar
 
 from fastapi import HTTPException, status
@@ -14,18 +15,33 @@ from sqlalchemy.orm import Session
 ModelT = TypeVar("ModelT")
 
 
+def _active_filter(model, stmt):
+    """Exclude soft-deleted rows (archived rows only show up in archive lists)."""
+    return stmt.where(model.deleted_at.is_(None))
+
+
 def list_scoped(db: Session, model, *, organization_id: uuid.UUID, **filters):
     stmt = select(model).where(model.organization_id == organization_id)
     for field, value in filters.items():
         if value is not None:
             stmt = stmt.where(getattr(model, field) == value)
+    stmt = _active_filter(model, stmt)
     return db.execute(stmt.order_by(model.created_at.desc())).scalars().all()
 
 
-def get_scoped_or_404(db: Session, model, *, organization_id: uuid.UUID, record_id: uuid.UUID):
-    obj = db.execute(
-        select(model).where(model.organization_id == organization_id, model.id == record_id)
-    ).scalar_one_or_none()
+def list_archived_scoped(db: Session, model, *, organization_id: uuid.UUID, **filters):
+    stmt = select(model).where(model.organization_id == organization_id, model.deleted_at.is_not(None))
+    for field, value in filters.items():
+        if value is not None:
+            stmt = stmt.where(getattr(model, field) == value)
+    return db.execute(stmt.order_by(model.deleted_at.desc())).scalars().all()
+
+
+def get_scoped_or_404(db: Session, model, *, organization_id: uuid.UUID, record_id: uuid.UUID, include_archived: bool = False):
+    stmt = select(model).where(model.organization_id == organization_id, model.id == record_id)
+    if not include_archived:
+        stmt = _active_filter(model, stmt)
+    obj = db.execute(stmt).scalar_one_or_none()
     if obj is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{model.__name__} not found")
     return obj
@@ -63,5 +79,20 @@ def update_scoped(db: Session, obj, *, user_id: uuid.UUID, data: dict):
 
 
 def delete_scoped(db: Session, obj):
+    """Soft-delete: mark the row as archived instead of removing it."""
+    obj.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+
+
+def restore_scoped(db: Session, obj):
+    """Bring an archived row back to the active set."""
+    obj.deleted_at = None
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+def purge_scoped(db: Session, obj):
+    """Hard-delete: permanently remove an archived row."""
     db.delete(obj)
     db.commit()

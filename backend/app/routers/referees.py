@@ -18,6 +18,14 @@ def list_referees(
     return crud.list_scoped(db, Referee, organization_id=user.organization_id)
 
 
+@router.get("/archived", response_model=list[RefereeOut], summary="List Archived Referees")
+def list_archived_referees(
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("referee.manage")),
+):
+    return crud.list_archived_scoped(db, Referee, organization_id=user.organization_id)
+
+
 @router.get("/{referee_id}", response_model=RefereeOut, summary="Get Referee")
 def get_referee(
     referee_id: uuid.UUID,
@@ -47,3 +55,37 @@ def update_referee(
 ):
     obj = crud.get_scoped_or_404(db, Referee, organization_id=user.organization_id, record_id=referee_id)
     return crud.update_scoped(db, obj, user_id=user.id, data=payload.model_dump(exclude_unset=True))
+
+
+@router.delete("/{referee_id}", status_code=204, summary="Delete Referee")
+def delete_referee(
+    referee_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("referee.manage")),
+):
+    obj = crud.get_scoped_or_404(db, Referee, organization_id=user.organization_id, record_id=referee_id)
+    crud.delete_scoped(db, obj)
+
+
+@router.post("/{referee_id}/restore", response_model=RefereeOut, summary="Restore Referee")
+def restore_referee(
+    referee_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("referee.manage")),
+):
+    obj = crud.get_scoped_or_404(
+        db, Referee, organization_id=user.organization_id, record_id=referee_id, include_archived=True
+    )
+    return crud.restore_scoped(db, obj)
+
+
+@router.delete("/{referee_id}/purge", status_code=204, summary="Permanently Delete Referee")
+def purge_referee(
+    referee_id: uuid.UUID,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("referee.manage")),
+):
+    obj = crud.get_scoped_or_404(
+        db, Referee, organization_id=user.organization_id, record_id=referee_id, include_archived=True
+    )
+    crud.purge_scoped(db, obj)
