@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import LeaguesPage from './pages/LeaguesPage'
 import SeasonsPage from './pages/SeasonsPage'
@@ -33,6 +34,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/" element={<Protected><DashboardPage /></Protected>} />
           <Route path="/leagues" element={<Protected><LeaguesPage /></Protected>} />
           <Route path="/seasons" element={<Protected><SeasonsPage /></Protected>} />

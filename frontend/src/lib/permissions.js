@@ -6,6 +6,7 @@
  * the UI allowed the user to click.
  */
 export const ROLES = [
+  'Viewer',
   'League Administrator',
   'Season Manager',
   'Team Manager',

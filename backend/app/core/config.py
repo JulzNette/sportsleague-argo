@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     )
     JWT_SECRET_KEY: str = "change-this-to-a-long-random-string"
     JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRE_MINUTES: int = 480
+    JWT_EXPIRE_MINUTES: int = 120
     ENVIRONMENT: str = "local"
 
     PROJECT_NAME: str = "Sports League Management API"

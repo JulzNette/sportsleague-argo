@@ -6,6 +6,7 @@ enforced it client-side, which is not real security).
 """
 
 ROLES = [
+    "Viewer",
     "League Administrator",
     "Season Manager",
     "Team Manager",

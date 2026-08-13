@@ -31,7 +31,7 @@ def main():
         db.add(org)
 
         roles = [
-            "League Administrator", "Season Manager", "Team Manager",
+            "Viewer", "League Administrator", "Season Manager", "Team Manager",
             "Referee", "Player", "System Administrator",
         ]
         users = {}

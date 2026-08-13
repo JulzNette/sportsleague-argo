@@ -31,6 +31,7 @@ api.interceptors.response.use(
 // one place to change a URL if the backend route ever moves.
 export const endpoints = {
   login: (data) => api.post('/auth/login', data),
+  register: (data) => api.post('/auth/register', data),
 
   leagues: {
     list: () => api.get('/leagues'),

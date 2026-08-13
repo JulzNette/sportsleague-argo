@@ -4,15 +4,23 @@ Run locally with: uvicorn app.main:app --reload
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
+from app.core.rate_limit import limiter
 from app.routers import (
     auth, divisions, leagues, matches, players, referees,
     reports, results, seasons, standings, teams,
 )
 
 settings = get_settings()
+
+# Interactive docs are only for local development (database on localhost).
+# They expose every route and schema, so they are turned off once the API is
+# pointed at a real (remote) database.
+show_docs = settings.ENVIRONMENT == "local" and "localhost" in settings.DATABASE_URL
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,7 +30,13 @@ app = FastAPI(
         "match scheduling, results, and computed standings."
     ),
     version="1.0.0",
+    docs_url="/docs" if show_docs else None,
+    redoc_url="/redoc" if show_docs else None,
+    openapi_url="/openapi.json" if show_docs else None,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 register_exception_handlers(app)
 

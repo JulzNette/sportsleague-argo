@@ -1,18 +1,19 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { can } from '../lib/permissions'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: 'bi-grid-1x2' },
-  { to: '/leagues', label: 'Leagues', icon: 'bi-diagram-3' },
-  { to: '/seasons', label: 'Seasons', icon: 'bi-calendar-range' },
-  { to: '/divisions', label: 'Divisions', icon: 'bi-collection' },
-  { to: '/teams', label: 'Teams', icon: 'bi-people' },
-  { to: '/players', label: 'Players', icon: 'bi-person-badge' },
-  { to: '/matches', label: 'Matches', icon: 'bi-controller' },
-  { to: '/standings', label: 'Standings', icon: 'bi-bar-chart-steps' },
-  { to: '/referees', label: 'Referees', icon: 'bi-flag' },
-  { to: '/reports', label: 'Reports', icon: 'bi-file-earmark-text' },
-  { to: '/archive', label: 'Archive', icon: 'bi-archive' },
+  { to: '/leagues', label: 'Leagues', icon: 'bi-diagram-3', perms: ['league.view'] },
+  { to: '/seasons', label: 'Seasons', icon: 'bi-calendar-range', perms: ['season.view'] },
+  { to: '/divisions', label: 'Divisions', icon: 'bi-collection', perms: ['division.view'] },
+  { to: '/teams', label: 'Teams', icon: 'bi-people', perms: ['team.view'] },
+  { to: '/players', label: 'Players', icon: 'bi-person-badge', perms: ['player.view'] },
+  { to: '/matches', label: 'Matches', icon: 'bi-controller', perms: ['match.view'] },
+  { to: '/standings', label: 'Standings', icon: 'bi-bar-chart-steps', perms: ['standing.view'] },
+  { to: '/referees', label: 'Referees', icon: 'bi-flag', perms: ['referee.manage'] },
+  { to: '/reports', label: 'Reports', icon: 'bi-file-earmark-text', perms: ['report.view'] },
+  { to: '/archive', label: 'Archive', icon: 'bi-archive', perms: ['league.update', 'team.delete'] },
 ]
 
 export default function Layout({ children }) {
@@ -26,6 +27,8 @@ export default function Layout({ children }) {
 
   const initials = (role || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 
+  const visibleNav = NAV.filter((item) => !item.perms || item.perms.some((p) => can(role, p)))
+
   return (
     <div className="flex min-h-screen">
       <aside className="w-60 shrink-0 bg-slate-900 text-white flex flex-col fixed top-0 bottom-0 left-0">
@@ -37,7 +40,7 @@ export default function Layout({ children }) {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5">
-          {NAV.map((item) => (
+          {visibleNav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

@@ -4,9 +4,11 @@ import { endpoints } from '../lib/api'
 import { useAuthStore } from '../store/authStore'
 import ErrorBanner from '../components/ErrorBanner'
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const login = useAuthStore((s) => s.login)
@@ -15,9 +17,17 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
+    if (password.length < 8) {
+      setError({ message: 'Password must be at least 8 characters.' })
+      return
+    }
+    if (password !== confirm) {
+      setError({ message: 'Passwords do not match.' })
+      return
+    }
     setLoading(true)
     try {
-      const res = await endpoints.login({ email, password })
+      const res = await endpoints.register({ full_name: fullName, email, password })
       login({ access_token: res.data.access_token, role: res.data.role, email })
       navigate('/')
     } catch (err) {
@@ -40,22 +50,35 @@ export default function LoginPage() {
 
         <ErrorBanner error={error} />
 
+        <div className="mb-4 rounded-md bg-sky-50 border border-sky-200 px-3 py-2.5 text-xs text-sky-800">
+          New accounts are <b>view-only</b> — you can follow leagues, teams, matches and standings, but only a
+          System Administrator can add or edit data.
+        </div>
+
         <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label className="label">Full name</label>
+            <input className="input" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+          </div>
           <div className="mb-3">
             <label className="label">Email</label>
             <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
-          <div className="mb-4">
+          <div className="mb-3">
             <label className="label">Password</label>
             <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
+          <div className="mb-4">
+            <label className="label">Confirm password</label>
+            <input className="input" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+          </div>
           <button className="btn btn-primary w-full justify-center" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-500">
-          Don't have an account? <Link to="/register" className="text-blue-600 font-semibold">Create one</Link>
+          Already have an account? <Link to="/login" className="text-blue-600 font-semibold">Sign in</Link>
         </p>
       </div>
     </div>
