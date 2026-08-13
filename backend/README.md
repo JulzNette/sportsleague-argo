@@ -25,7 +25,7 @@ uvicorn app.main:app --reload --port 8020
 - Health check: http://localhost:8020/health
 
 `seed.py` prints a login (email) per role — password for all of them is
-`Password123!`.
+`Admin123`.
 
 ## Project layout
 
