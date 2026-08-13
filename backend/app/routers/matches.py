@@ -1,6 +1,6 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.deps import CurrentUser, get_db_session, require_permission
 from app.core.state_machines import MATCH_STATUS_TRANSITIONS, is_valid_transition
@@ -21,6 +21,7 @@ def list_matches(
     return crud.list_scoped(
         db, Match, organization_id=user.organization_id,
         season_id=season_id, division_id=division_id, status=status_,
+        options=[selectinload(Match.result)],
     )
 
 

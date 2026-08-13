@@ -43,6 +43,15 @@ export default function MatchesPage() {
 
   const visibleMatches = sportFilter ? matches?.filter((m) => sportOf.division(m.division_id) === sportFilter) : matches
 
+  const resultSummary = (m) => {
+    const res = m.result
+    if (!res) return null
+    if (res.result_type === 'Forfeit') return { text: `Forfeit — ${teamName(res.forfeit_winner_team_id)}`, winnerId: res.forfeit_winner_team_id }
+    if (res.result_type === 'Draw') return { text: `Draw ${res.home_score} – ${res.away_score}`, winnerId: null }
+    const winnerId = res.home_score > res.away_score ? m.home_team_id : res.away_score > res.home_score ? m.away_team_id : null
+    return { text: `${res.home_score} – ${res.away_score}`, winnerId }
+  }
+
   const invalidate = () => qc.invalidateQueries({ queryKey: ['matches'] })
 
   const createMut = useMutation({ mutationFn: (data) => endpoints.matches.create(data), onSuccess: () => { invalidate(); setModal(null) }, onError: setError })
@@ -80,7 +89,18 @@ export default function MatchesPage() {
           )}
           <DataTable
             columns={[
-              { key: 'matchup', label: 'Matchup', render: (r) => <span className="font-semibold text-gray-900">{teamName(r.home_team_id)} vs {teamName(r.away_team_id)}</span> },
+              { key: 'matchup', label: 'Matchup', render: (r) => {
+                const s = resultSummary(r)
+                const home = teamName(r.home_team_id)
+                const away = teamName(r.away_team_id)
+                if (s?.winnerId === r.home_team_id) return <span className="font-semibold text-gray-900"><b className="text-emerald-700">{home}</b> vs {away}</span>
+                if (s?.winnerId === r.away_team_id) return <span className="font-semibold text-gray-900">{home} vs <b className="text-emerald-700">{away}</b></span>
+                return <span className="font-semibold text-gray-900">{home} vs {away}</span>
+              } },
+              { key: 'result', label: 'Result', render: (r) => {
+                const s = resultSummary(r)
+                return s ? <span className="text-gray-700">{s.text}</span> : <span className="text-gray-400">—</span>
+              } },
               { key: 'sport', label: 'Sport', render: (r) => <SportBadge sport={sportOf.division(r.division_id)} /> },
               { key: 'when', label: 'When', render: (r) => `${r.scheduled_date} ${r.scheduled_time}` },
               { key: 'venue', label: 'Venue' },

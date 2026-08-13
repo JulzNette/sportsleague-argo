@@ -20,12 +20,14 @@ def _active_filter(model, stmt):
     return stmt.where(model.deleted_at.is_(None))
 
 
-def list_scoped(db: Session, model, *, organization_id: uuid.UUID, **filters):
+def list_scoped(db: Session, model, *, organization_id: uuid.UUID, options: list | None = None, **filters):
     stmt = select(model).where(model.organization_id == organization_id)
     for field, value in filters.items():
         if value is not None:
             stmt = stmt.where(getattr(model, field) == value)
     stmt = _active_filter(model, stmt)
+    if options:
+        stmt = stmt.options(*options)
     return db.execute(stmt.order_by(model.created_at.desc())).scalars().all()
 
 

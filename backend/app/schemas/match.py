@@ -2,6 +2,7 @@ import uuid
 from datetime import date, time
 from pydantic import BaseModel, Field, model_validator
 from app.schemas.common import AuditFieldsOut
+from app.schemas.result import MatchResultOut
 
 _STATUS = "^(Scheduled|In Progress|Completed|Postponed|Cancelled|Forfeited)$"
 _TYPE = "^(Regular|Playoff)$"
@@ -45,3 +46,4 @@ class MatchStatusUpdate(BaseModel):
 
 class MatchOut(MatchBase, AuditFieldsOut):
     status: str
+    result: MatchResultOut | None = None
