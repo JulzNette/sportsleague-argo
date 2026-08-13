@@ -23,7 +23,7 @@ const MEDAL = [
   'bg-gray-100 text-gray-500',
 ]
 
-function LeaderboardCard({ metric, rows }) {
+function LeaderboardCard({ metric, rows, nameKey = 'team_name', idKey = 'team_id' }) {
   return (
     <div className="card">
       <div className="px-4 py-3 border-b border-gray-200 flex items-center gap-2">
@@ -33,11 +33,11 @@ function LeaderboardCard({ metric, rows }) {
       <ol className="divide-y divide-gray-100">
         {rows.length === 0 && <li className="px-4 py-8 text-center text-sm text-gray-400">No data yet.</li>}
         {rows.map((r, i) => (
-          <li key={r.team_id} className="flex items-center gap-3 px-4 py-2.5">
+          <li key={r[idKey]} className="flex items-center gap-3 px-4 py-2.5">
             <span className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-xs font-bold ${MEDAL[i] || MEDAL[3]}`}>
               {i + 1}
             </span>
-            <span className="flex-1 font-semibold text-sm text-gray-900 truncate">{r.team_name}</span>
+            <span className="flex-1 font-semibold text-sm text-gray-900 truncate">{r[nameKey]}</span>
             <span className="text-sm text-gray-500">{metric.format(r)}</span>
           </li>
         ))}
@@ -45,6 +45,13 @@ function LeaderboardCard({ metric, rows }) {
     </div>
   )
 }
+
+const PLAYER_METRICS = [
+  { key: 'points', label: 'Top scorer', icon: 'bi-trophy', format: (r) => `${r.points} pts` },
+  { key: 'assists', label: 'Top playmaker', icon: 'bi-dribbble', format: (r) => `${r.assists} ast` },
+  { key: 'rebounds', label: 'Top rebounder', icon: 'bi-arrow-up-circle', format: (r) => `${r.rebounds} reb` },
+  { key: 'steals', label: 'Most steals', icon: 'bi-lightning', format: (r) => `${r.steals} stl` },
+]
 
 export default function StatisticsPage() {
   const { data: seasons } = useQuery({ queryKey: ['seasons'], queryFn: () => endpoints.seasons.list().then((r) => r.data) })
@@ -62,8 +69,17 @@ export default function StatisticsPage() {
     queryFn: () => endpoints.standings.get(activeSeasonId, divisionId || undefined).then((r) => r.data),
     enabled: !!activeSeasonId,
   })
+  const { data: playerStats } = useQuery({
+    queryKey: ['playerStats', activeSeasonId, divisionId],
+    queryFn: () => endpoints.stats.players({
+      season_id: activeSeasonId,
+      division_id: divisionId || undefined,
+    }).then((r) => r.data),
+    enabled: !!activeSeasonId,
+  })
 
   const rows = (standings || []).map((r) => ({ ...r, id: r.team_id }))
+  const playerRows = (playerStats || []).map((r) => ({ ...r, id: r.player_id }))
 
   return (
     <div>
@@ -111,6 +127,35 @@ export default function StatisticsPage() {
             ]}
             rows={rows}
             emptyLabel="No completed matches yet for this season/division."
+          />
+
+          <h2 className="text-lg font-bold text-gray-900 mt-8 mb-4">Player statistics</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 mb-6">
+            {PLAYER_METRICS.map((m) => (
+              <LeaderboardCard
+                key={m.key}
+                metric={m}
+                rows={[...playerRows].sort((a, b) => b[m.key] - a[m.key]).slice(0, 5)}
+                nameKey="player_name"
+                idKey="player_id"
+              />
+            ))}
+          </div>
+
+          <DataTable
+            columns={[
+              { key: 'rank', label: '#', render: (r) => r.rank },
+              { key: 'player_name', label: 'Player', render: (r) => <span className="font-semibold text-gray-900">{r.player_name}</span> },
+              { key: 'team_name', label: 'Team' },
+              { key: 'games_played', label: 'GP' },
+              { key: 'points', label: 'PTS', render: (r) => <b>{r.points}</b> },
+              { key: 'assists', label: 'AST' },
+              { key: 'rebounds', label: 'REB' },
+              { key: 'steals', label: 'STL' },
+              { key: 'fouls', label: 'FLS' },
+            ]}
+            rows={playerRows}
+            emptyLabel="No player statistics recorded yet for this season/division."
           />
         </>
       )}

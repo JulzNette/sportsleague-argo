@@ -110,6 +110,13 @@ export const endpoints = {
     get: (seasonId, divisionId) =>
       api.get('/standings', { params: { season_id: seasonId, division_id: divisionId } }),
   },
+  stats: {
+    players: (params) => api.get('/stats/players', { params }),
+  },
+  playerStats: {
+    get: (matchId) => api.get(`/matches/${matchId}/stats`),
+    submit: (matchId, data) => api.post(`/matches/${matchId}/stats`, data),
+  },
   reports: {
     list: () => api.get('/reports'),
     create: (data) => api.post('/reports', data),

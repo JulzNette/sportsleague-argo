@@ -11,8 +11,8 @@ from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.rate_limit import limiter
 from app.routers import (
-    auth, divisions, leagues, matches, players, referees,
-    reports, results, seasons, standings, teams,
+    auth, divisions, leagues, matches, match_stats, players, referees,
+    reports, results, seasons, standings, stats, teams,
 )
 
 settings = get_settings()
@@ -58,7 +58,9 @@ app.include_router(players.router, prefix=api)
 app.include_router(referees.router, prefix=api)
 app.include_router(matches.router, prefix=api)
 app.include_router(results.router, prefix=api)
+app.include_router(match_stats.router, prefix=api)
 app.include_router(standings.router, prefix=api)
+app.include_router(stats.router, prefix=api)
 app.include_router(reports.router, prefix=api)
 
 

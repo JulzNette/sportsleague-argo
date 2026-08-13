@@ -49,6 +49,10 @@ PERMISSIONS: dict[str, list[str]] = {
     "result.submit": ["League Administrator", "Season Manager", "Referee", "System Administrator"],
     "result.update": ["League Administrator", "Season Manager", "System Administrator"],
     "standing.view": _ALL_ROLES,
+    "player_stat.view": _ALL_ROLES,
+    "player_stat.enter": [
+        "League Administrator", "Season Manager", "Referee", "System Administrator",
+    ],
     "report.view": ["League Administrator", "Season Manager", "System Administrator"],
     "report.generate": ["League Administrator", "Season Manager", "System Administrator"],
     "referee.manage": ["League Administrator", "System Administrator"],

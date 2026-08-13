@@ -11,4 +11,5 @@ from app.models.player import Player  # noqa: F401
 from app.models.referee import Referee  # noqa: F401
 from app.models.match import Match  # noqa: F401
 from app.models.match_result import MatchResult  # noqa: F401
+from app.models.player_stat import PlayerGameStat  # noqa: F401
 from app.models.report import Report  # noqa: F401
