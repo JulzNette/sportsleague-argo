@@ -11,6 +11,7 @@ const NAV = [
   { to: '/players', label: 'Players', icon: 'bi-person-badge', perms: ['player.view'] },
   { to: '/matches', label: 'Matches', icon: 'bi-controller', perms: ['match.view'] },
   { to: '/standings', label: 'Standings', icon: 'bi-bar-chart-steps', perms: ['standing.view'] },
+  { to: '/statistics', label: 'Statistics', icon: 'bi-pie-chart', perms: ['standing.view'] },
   { to: '/referees', label: 'Referees', icon: 'bi-flag', perms: ['referee.manage'] },
   { to: '/reports', label: 'Reports', icon: 'bi-file-earmark-text', perms: ['report.view'] },
   { to: '/archive', label: 'Archive', icon: 'bi-archive', perms: ['league.update', 'team.delete'] },

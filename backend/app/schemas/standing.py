@@ -14,3 +14,8 @@ class StandingRow(BaseModel):
     losses: int
     draws: int
     points: int
+    points_for: int
+    points_against: int
+    point_differential: int
+    win_percentage: float
+    rank: int

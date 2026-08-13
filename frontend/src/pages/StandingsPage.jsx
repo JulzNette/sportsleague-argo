@@ -46,7 +46,7 @@ export default function StandingsPage() {
             { key: 'draws', label: 'D' },
             { key: 'points', label: 'PTS', render: (r) => <b>{r.points}</b> },
           ]}
-          rows={standings?.map((r, i) => ({ ...r, id: r.team_id, rank: i + 1 }))}
+          rows={standings?.map((r) => ({ ...r, id: r.team_id }))}
           emptyLabel="No completed matches yet for this season/division."
         />
       )}

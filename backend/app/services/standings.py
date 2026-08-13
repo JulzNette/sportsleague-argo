@@ -44,7 +44,10 @@ def compute_standings(db: Session, *, organization_id: uuid.UUID, season_id: uui
     def bucket(team_id: uuid.UUID) -> dict:
         return stats.setdefault(
             team_id,
-            {"matches_played": 0, "wins": 0, "losses": 0, "draws": 0, "points": 0},
+            {
+                "matches_played": 0, "wins": 0, "losses": 0, "draws": 0,
+                "points": 0, "points_for": 0, "points_against": 0,
+            },
         )
 
     for match, result in rows:
@@ -60,6 +63,13 @@ def compute_standings(db: Session, *, organization_id: uuid.UUID, season_id: uui
             bucket(loser_id)["losses"] += 1
             bucket(loser_id)["points"] += POINTS_LOSS
             continue
+
+        # Forfeits don't add to either team's scored points total, so score
+        # tracking only happens here, for real (non-forfeit) results.
+        home["points_for"] += result.home_score
+        home["points_against"] += result.away_score
+        away["points_for"] += result.away_score
+        away["points_against"] += result.home_score
 
         if result.home_score == result.away_score:
             home["draws"] += 1
@@ -88,8 +98,20 @@ def compute_standings(db: Session, *, organization_id: uuid.UUID, season_id: uui
     }
 
     table = [
-        {"team_id": team_id, "team_name": team_names.get(team_id, "Unknown"), **s}
+        {
+            "team_id": team_id,
+            "team_name": team_names.get(team_id, "Unknown"),
+            "points_for": s["points_for"],
+            "points_against": s["points_against"],
+            "point_differential": s["points_for"] - s["points_against"],
+            "win_percentage": round(
+                (s["wins"] / s["matches_played"] * 100) if s["matches_played"] else 0.0, 1
+            ),
+            **s,
+        }
         for team_id, s in stats.items()
     ]
-    table.sort(key=lambda r: (-r["points"], -r["wins"], r["team_name"]))
+    table.sort(key=lambda r: (-r["points"], -r["point_differential"], -r["wins"], r["team_name"]))
+    for rank, row in enumerate(table, start=1):
+        row["rank"] = rank
     return table

@@ -39,6 +39,9 @@ def test_standings_forfeit_counts_as_win_for_winner(dbsession, org, season_divis
     assert by_name["Team A"]["points"] == 3 and by_name["Team A"]["wins"] == 1
     assert by_name["Team B"]["points"] == 0 and by_name["Team B"]["losses"] == 1
     assert by_name["Team A"]["matches_played"] == 1
+    # Forfeits don't add to either team's scored points total.
+    assert by_name["Team A"]["points_for"] == 0
+    assert by_name["Team B"]["points_against"] == 0
 
 
 def test_standings_ignores_non_completed_matches(dbsession, org, season_division_teams, add_match):
@@ -76,6 +79,12 @@ def test_standings_endpoint_returns_table(client, dbsession, org, season_divisio
     assert len(rows) == 2
     assert rows[0]["team_name"] == "Team A"
     assert rows[0]["points"] == 3
+    assert rows[0]["points_for"] == 70
+    assert rows[0]["points_against"] == 65
+    assert rows[0]["point_differential"] == 5
+    assert rows[0]["win_percentage"] == 100.0
+    assert rows[0]["rank"] == 1
     assert set(rows[0].keys()) == {
         "team_id", "team_name", "matches_played", "wins", "losses", "draws", "points",
+        "points_for", "points_against", "point_differential", "win_percentage", "rank",
     }

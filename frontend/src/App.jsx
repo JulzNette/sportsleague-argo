@@ -13,6 +13,7 @@ import PlayersPage from './pages/PlayersPage'
 import RefereesPage from './pages/RefereesPage'
 import MatchesPage from './pages/MatchesPage'
 import StandingsPage from './pages/StandingsPage'
+import StatisticsPage from './pages/StatisticsPage'
 import ReportsPage from './pages/ReportsPage'
 import ArchivePage from './pages/ArchivePage'
 import SettingsPage from './pages/SettingsPage'
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/referees" element={<Protected><RefereesPage /></Protected>} />
           <Route path="/matches" element={<Protected><MatchesPage /></Protected>} />
           <Route path="/standings" element={<Protected><StandingsPage /></Protected>} />
+          <Route path="/statistics" element={<Protected><StatisticsPage /></Protected>} />
           <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
           <Route path="/archive" element={<Protected><ArchivePage /></Protected>} />
           <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
