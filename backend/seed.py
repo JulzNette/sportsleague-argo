@@ -41,7 +41,7 @@ def main():
                 id=uuid.uuid4() if role != "System Administrator" else SYSTEM_USER_ID,
                 organization_id=ORG_ID,
                 email=f"{slug}@gmail.com",
-                hashed_password=hash_password("Password123!"),
+                hashed_password=hash_password("Admin123"),
                 full_name=role,
                 role=role,
                 is_active=True,
@@ -162,7 +162,7 @@ def main():
         db.commit()
         print("Seed complete.")
         print(f"Organization ID: {ORG_ID}")
-        print("Login with any of these (password: Password123!):")
+        print("Login with any of these (password: Admin123):")
         for role in roles:
             print(f"  - {role.lower().replace(' ', '.')}@gmail.com  ({role})")
     except Exception:
