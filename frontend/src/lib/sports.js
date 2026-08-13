@@ -1,0 +1,17 @@
+export const SPORTS = [
+  'Basketball',
+  'Volleyball',
+  'Badminton',
+  'Soccer',
+  'Football',
+  'Baseball',
+  'Softball',
+  'Tennis',
+  'Table Tennis',
+  'Swimming',
+  'Athletics / Track & Field',
+  'Esports',
+  'Chess',
+  'Darts',
+  'Other',
+]

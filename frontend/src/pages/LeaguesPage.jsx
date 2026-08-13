@@ -9,6 +9,7 @@ import Modal from '../components/Modal'
 import Field from '../components/Field'
 import Badge from '../components/Badge'
 import ErrorBanner from '../components/ErrorBanner'
+import { SPORTS } from '../lib/sports'
 
 const EMPTY = { name: '', sport_type: '', description: '', status: 'Active' }
 
@@ -89,7 +90,10 @@ export default function LeaguesPage() {
             <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
           <Field label="Sport type">
-            <input className="input" value={form.sport_type} onChange={(e) => setForm({ ...form, sport_type: e.target.value })} placeholder="Basketball, Volleyball..." />
+            <select className="input" value={form.sport_type} onChange={(e) => setForm({ ...form, sport_type: e.target.value })}>
+              <option value="" disabled>Select a sport...</option>
+              {SPORTS.map((sport) => <option key={sport} value={sport}>{sport}</option>)}
+            </select>
           </Field>
           <Field label="Description">
             <textarea className="input" rows={2} value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />

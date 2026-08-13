@@ -122,6 +122,43 @@ def main():
             result_type="Normal", notes="Clean game, no incidents.", submitted_by=ref.id,
         ))
 
+        # Additional sample leagues covering other sports, so the app clearly
+        # supports more than basketball. Each gets a season + division + teams.
+        extra_leagues = [
+            ("Liga Barangay Volleyball", "Volleyball", "Inter-barangay women's and men's league",
+             "Season 1 - 2026", "Smash Volleyball Club", "Net Runners"),
+            ("Badminton Club Open", "Badminton", "Open division badminton tournament",
+             "2026 Open Tournament", "Shuttle Kings", "Smash Aces"),
+            ("Metro Football League", "Soccer", "Community football league",
+             "2026 Season", "United FC", "Metro Strikers"),
+        ]
+        for league_name, sport_type, desc, season_name, team1, team2 in extra_leagues:
+            extra_league = audit(
+                League, name=league_name, sport_type=sport_type,
+                description=desc, status="Active",
+            )
+            db.add(extra_league)
+            db.flush()
+
+            extra_season = audit(
+                Season, league_id=extra_league.id, name=season_name,
+                start_date=date(2026, 9, 1), end_date=date(2026, 12, 15),
+                format="Round Robin", status="Active",
+            )
+            db.add(extra_season)
+            db.flush()
+
+            extra_div = audit(Division, season_id=extra_season.id, name="Open Division", max_teams=8, status="Active")
+            db.add(extra_div)
+            db.flush()
+
+            for team_name in (team1, team2):
+                db.add(audit(
+                    Team, division_id=extra_div.id, name=team_name, coach_name="To be announced",
+                    contact_email=f"coach.{team_name.split()[0].lower()}@example.com",
+                    contact_phone="09181234567", status="Active",
+                ))
+
         db.commit()
         print("Seed complete.")
         print(f"Organization ID: {ORG_ID}")

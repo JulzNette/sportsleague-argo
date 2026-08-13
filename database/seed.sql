@@ -26,6 +26,8 @@ DECLARE
 
     v_league_id  UUID := '33333333-3333-3333-3333-333333333331';
     v_league2_id UUID := '33333333-3333-3333-3333-333333333332';
+    v_league3_id UUID := '33333333-3333-3333-3333-333333333333';
+    v_league4_id UUID := '33333333-3333-3333-3333-333333333334';
     v_season_id  UUID := '44444444-4444-4444-4444-444444444441';
     v_season2_id UUID := '44444444-4444-4444-4444-444444444442';
     v_div_a_id   UUID := '55555555-5555-5555-5555-555555555551';
@@ -57,7 +59,9 @@ BEGIN
     -- Leagues
     INSERT INTO sportsleague_leagues (id, organization_id, name, sport_type, description, status, created_by, updated_by) VALUES
         (v_league_id,  v_org_id, 'Barangay Basketball League', 'Basketball', 'Annual inter-barangay competition', 'Active', v_admin_id, v_admin_id),
-        (v_league2_id, v_org_id, 'Metro Volleyball Cup',       'Volleyball', 'Open volleyball tournament',         'Active', v_admin_id, v_admin_id);
+        (v_league2_id, v_org_id, 'Metro Volleyball Cup',       'Volleyball', 'Open volleyball tournament',         'Active', v_admin_id, v_admin_id),
+        (v_league3_id, v_org_id, 'Badminton Club Open',        'Badminton',  'Open division badminton tournament', 'Active', v_admin_id, v_admin_id),
+        (v_league4_id, v_org_id, 'Metro Football League',      'Soccer',     'Community football league',          'Active', v_admin_id, v_admin_id);
 
     -- Seasons
     INSERT INTO sportsleague_seasons (id, organization_id, league_id, name, start_date, end_date, format, status, created_by, updated_by) VALUES
