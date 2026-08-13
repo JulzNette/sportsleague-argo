@@ -72,6 +72,9 @@ export default function Layout({ children }) {
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">
               {initials}
             </div>
+            <button onClick={() => navigate('/settings')} title="Settings" className="text-gray-300 hover:text-white">
+              <i className="bi bi-gear text-lg" />
+            </button>
             <button onClick={handleLogout} title="Log out" className="text-gray-300 hover:text-white">
               <i className="bi bi-box-arrow-right text-lg" />
             </button>

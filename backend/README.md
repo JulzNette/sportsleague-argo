@@ -53,7 +53,7 @@ app/
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /auth/login` |
+| Auth | `POST /auth/login`, `POST /auth/register`, `POST /auth/change-password` |
 | Leagues | `GET/POST /leagues`, `GET/PATCH/DELETE /leagues/{id}` |
 | Seasons | `GET/POST /seasons`, `GET/PATCH /seasons/{id}` |
 | Divisions | `GET/POST /divisions`, `GET/PATCH/DELETE /divisions/{id}` |
@@ -80,3 +80,14 @@ registers every table on the shared metadata.
 `Dockerfile` + `docker-entrypoint.sh` wait for Postgres, run migrations,
 seed on first boot only, then serve. Driven by the root `docker-compose.yml`
 — you normally won't build this image directly.
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+make test            # or: python -m pytest tests -q
+```
+
+The suite runs against an in-memory SQLite database — nothing touches the
+real `DATABASE_URL`. It covers auth (register, login, change-password, and
+the read-only Viewer enforcement) and the live-computed standings.

@@ -15,6 +15,7 @@ import MatchesPage from './pages/MatchesPage'
 import StandingsPage from './pages/StandingsPage'
 import ReportsPage from './pages/ReportsPage'
 import ArchivePage from './pages/ArchivePage'
+import SettingsPage from './pages/SettingsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/standings" element={<Protected><StandingsPage /></Protected>} />
           <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
           <Route path="/archive" element={<Protected><ArchivePage /></Protected>} />
+          <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

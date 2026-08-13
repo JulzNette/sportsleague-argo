@@ -13,11 +13,12 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.deps import CurrentUser, get_current_user
 from app.core.rate_limit import limiter
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_db
 from app.models.stub import Organization, User
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.schemas.auth import ChangePasswordRequest, LoginRequest, RegisterRequest, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -82,3 +83,27 @@ def register(request: Request, payload: RegisterRequest, db: Session = Depends(g
 
     token = create_access_token(user_id=user.id, organization_id=user.organization_id, role=user.role)
     return TokenResponse(access_token=token, role=user.role)
+
+
+@router.post("/change-password", status_code=204, summary="Change password")
+@limiter.limit("5/minute")
+def change_password(
+    request: Request,
+    payload: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
+    """
+    Lets the logged-in user set a new password. The current password must be
+    supplied and verified first. Only the account that owns the session token
+    can be changed - there is no way to change another user's password here.
+    """
+    row = db.execute(select(User).where(User.id == user.id)).scalar_one_or_none()
+    if row is None or not row.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
+
+    if not verify_password(payload.current_password, row.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect.")
+
+    row.hashed_password = hash_password(payload.new_password)
+    db.commit()
