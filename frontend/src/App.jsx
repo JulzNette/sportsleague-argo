@@ -10,6 +10,8 @@ import SeasonsPage from './pages/SeasonsPage'
 import DivisionsPage from './pages/DivisionsPage'
 import TeamsPage from './pages/TeamsPage'
 import PlayersPage from './pages/PlayersPage'
+import RegistrationsPage from './pages/RegistrationsPage'
+import RegisterTeamPage from './pages/RegisterTeamPage'
 import RefereesPage from './pages/RefereesPage'
 import MatchesPage from './pages/MatchesPage'
 import StandingsPage from './pages/StandingsPage'
@@ -43,6 +45,8 @@ export default function App() {
           <Route path="/divisions" element={<Protected><DivisionsPage /></Protected>} />
           <Route path="/teams" element={<Protected><TeamsPage /></Protected>} />
           <Route path="/players" element={<Protected><PlayersPage /></Protected>} />
+          <Route path="/registrations" element={<Protected><RegistrationsPage /></Protected>} />
+          <Route path="/register-team" element={<Protected><RegisterTeamPage /></Protected>} />
           <Route path="/referees" element={<Protected><RefereesPage /></Protected>} />
           <Route path="/matches" element={<Protected><MatchesPage /></Protected>} />
           <Route path="/standings" element={<Protected><StandingsPage /></Protected>} />

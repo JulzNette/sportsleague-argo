@@ -17,9 +17,9 @@ export const SEASON_STATUS_TRANSITIONS = {
 }
 
 export const STATUS_COLOR = {
-  Active: 'success', Completed: 'success',
-  Scheduled: 'primary', 'In Progress': 'primary',
+  Active: 'success', Completed: 'success', Approved: 'success',
+  Scheduled: 'primary', 'In Progress': 'primary', Pending: 'warning',
   Draft: 'warning', Postponed: 'warning',
-  Cancelled: 'danger', Forfeited: 'danger', Disqualified: 'danger', Suspended: 'danger',
+  Cancelled: 'danger', Forfeited: 'danger', Disqualified: 'danger', Suspended: 'danger', Rejected: 'danger',
   Archived: 'neutral', Withdrawn: 'neutral', Inactive: 'neutral',
 }

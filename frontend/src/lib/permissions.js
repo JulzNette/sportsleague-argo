@@ -32,6 +32,9 @@ export const PERMISSIONS = {
   'team.update': ['League Administrator', 'Season Manager', 'Team Manager', 'System Administrator'],
   'team.delete': ['League Administrator', 'System Administrator'],
   'team.manage_roster': ['League Administrator', 'Season Manager', 'Team Manager', 'System Administrator'],
+  'registration.view': ALL,
+  'registration.submit': ALL,
+  'registration.review': ['League Administrator', 'Season Manager', 'System Administrator'],
   'player.view': ALL,
   'player.create': ['League Administrator', 'Season Manager', 'Team Manager', 'System Administrator'],
   'player.update': ['League Administrator', 'Season Manager', 'Team Manager', 'System Administrator'],
@@ -49,6 +52,7 @@ export const PERMISSIONS = {
   'player_stat.enter': ['League Administrator', 'Season Manager', 'Referee', 'System Administrator'],
   'report.view': ['League Administrator', 'Season Manager', 'System Administrator'],
   'report.generate': ['League Administrator', 'Season Manager', 'System Administrator'],
+  'notification.view': ALL,
   'referee.manage': ['League Administrator', 'System Administrator'],
   'settings.manage': ['System Administrator'],
 }

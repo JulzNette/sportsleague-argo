@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { endpoints } from '../lib/api'
 import { useAuthStore } from '../store/authStore'
 import { can } from '../lib/permissions'
 
@@ -9,6 +12,7 @@ const NAV = [
   { to: '/divisions', label: 'Divisions', icon: 'bi-collection', perms: ['division.view'] },
   { to: '/teams', label: 'Teams', icon: 'bi-people', perms: ['team.view'] },
   { to: '/players', label: 'Players', icon: 'bi-person-badge', perms: ['player.view'] },
+  { to: '/registrations', label: 'Registrations', icon: 'bi-clipboard-check', perms: ['registration.view'] },
   { to: '/matches', label: 'Matches', icon: 'bi-controller', perms: ['match.view'] },
   { to: '/standings', label: 'Standings', icon: 'bi-bar-chart-steps', perms: ['standing.view'] },
   { to: '/statistics', label: 'Statistics', icon: 'bi-pie-chart', perms: ['standing.view'] },
@@ -20,6 +24,39 @@ const NAV = [
 export default function Layout({ children }) {
   const { role, email, logout } = useAuthStore()
   const navigate = useNavigate()
+  const qc = useQueryClient()
+  const [bellOpen, setBellOpen] = useState(false)
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => endpoints.notifications.list().then((r) => r.data),
+    refetchInterval: 30000,
+  })
+  const { data: unread } = useQuery({
+    queryKey: ['notifications-unread'],
+    queryFn: () => endpoints.notifications.unreadCount().then((r) => r.data),
+    refetchInterval: 30000,
+  })
+  const markReadMut = useMutation({
+    mutationFn: (id) => endpoints.notifications.markRead(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] })
+      qc.invalidateQueries({ queryKey: ['notifications-unread'] })
+    },
+  })
+  const markAllMut = useMutation({
+    mutationFn: () => endpoints.notifications.markAllRead(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] })
+      qc.invalidateQueries({ queryKey: ['notifications-unread'] })
+    },
+  })
+
+  function openNotification(n) {
+    if (!n.is_read) markReadMut.mutate(n.id)
+    setBellOpen(false)
+    navigate(n.registration_id ? `/registrations?id=${n.registration_id}` : '/registrations')
+  }
 
   function handleLogout() {
     logout()
@@ -72,6 +109,50 @@ export default function Layout({ children }) {
             <span className="text-xs text-gray-300">Viewing as: <b className="text-white">{role}</b></span>
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">
               {initials}
+            </div>
+            <div className="relative">
+              <button onClick={() => setBellOpen((v) => !v)} className="relative text-gray-300 hover:text-white" title="Notifications">
+                <i className="bi bi-bell text-lg" />
+                {unread?.count > 0 && (
+                  <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center">
+                    {unread.count}
+                  </span>
+                )}
+              </button>
+              {bellOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setBellOpen(false)} />
+                  <div className="absolute right-0 top-9 z-50 w-80 max-h-96 overflow-y-auto card !p-0">
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200">
+                      <span className="text-sm font-semibold text-gray-900">Notifications</span>
+                      {unread?.count > 0 && (
+                        <button className="text-xs text-blue-600 font-medium" onClick={() => markAllMut.mutate()}>Mark all read</button>
+                      )}
+                    </div>
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-sm text-gray-400">No notifications yet.</div>
+                    ) : (
+                      <ul>
+                        {notifications.map((n) => (
+                          <li key={n.id}>
+                            <button
+                              onClick={() => openNotification(n)}
+                              className={`w-full text-left px-4 py-2.5 border-b border-gray-100 last:border-0 hover:bg-gray-50 ${n.is_read ? '' : 'bg-blue-50/60'}`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="text-sm font-medium text-gray-900">{n.title}</span>
+                                {!n.is_read && <span className="w-2 h-2 rounded-full bg-blue-600 mt-1 shrink-0" />}
+                              </div>
+                              {n.message && <p className="text-xs text-gray-500 mt-0.5">{n.message}</p>}
+                              <span className="text-[11px] text-gray-400 mt-1 block">{new Date(n.created_at).toLocaleString()}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
             <button onClick={() => navigate('/settings')} title="Settings" className="text-gray-300 hover:text-white">
               <i className="bi bi-gear text-lg" />

@@ -15,6 +15,7 @@ from app.models.league import League
 from app.models.match import Match
 from app.models.match_result import MatchResult
 from app.models.player import Player
+from app.models.registration import Registration, RegistrationDocument, RegistrationPlayer
 from app.models.referee import Referee
 from app.models.season import Season
 from app.models.stub import Organization, User
@@ -101,6 +102,37 @@ def main():
                      contact_phone="09201111111", status="Active")
         db.add(ref)
         db.flush()
+
+        registration = audit(
+            Registration, division_id=division_a.id, team_name="Silver Sharks",
+            coach_name="Nina Ramos", contact_email="nina.ramos@example.com",
+            contact_phone="09171234567",
+            notes="New team hoping to join Division A this season.", status="Pending",
+        )
+        registration.players = [
+            RegistrationPlayer(
+                organization_id=ORG_ID, created_by=admin_id, updated_by=admin_id,
+                full_name="Jules Aquino", date_of_birth=date(2003, 5, 12),
+                position="Guard", jersey_number="7", contact_phone="09171112222",
+            ),
+            RegistrationPlayer(
+                organization_id=ORG_ID, created_by=admin_id, updated_by=admin_id,
+                full_name="Bea Navarro", date_of_birth=date(2004, 9, 1),
+                position="Forward", jersey_number="11", contact_phone="09173334444",
+            ),
+        ]
+        registration.documents = [
+            RegistrationDocument(
+                organization_id=ORG_ID, created_by=admin_id, updated_by=admin_id,
+                player_full_name="Jules Aquino", document_type="Birth Certificate",
+                file_name="jules-birth.pdf", notes="Notarized copy.",
+            ),
+            RegistrationDocument(
+                organization_id=ORG_ID, created_by=admin_id, updated_by=admin_id,
+                document_type="Team Waiver", file_name="silver-sharks-waiver.pdf",
+            ),
+        ]
+        db.add(registration)
 
         m1 = audit(
             Match, season_id=season.id, division_id=division_a.id,

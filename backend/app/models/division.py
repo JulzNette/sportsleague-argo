@@ -21,3 +21,6 @@ class Division(OrgAuditMixin, Base):
 
     season: Mapped["Season"] = relationship(back_populates="divisions")
     teams: Mapped[list["Team"]] = relationship(back_populates="division", cascade="all, delete-orphan")
+    registrations: Mapped[list["Registration"]] = relationship(
+        back_populates="division", cascade="all, delete-orphan",
+    )

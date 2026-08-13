@@ -80,6 +80,18 @@ export const endpoints = {
     restore: (id) => api.post(`/players/${id}/restore`),
     purge: (id) => api.delete(`/players/${id}/purge`),
   },
+  registrations: {
+    list: (params) => api.get('/registrations', { params }),
+    get: (id) => api.get(`/registrations/${id}`),
+    create: (data) => api.post('/registrations', data),
+    review: (id, data) => api.patch(`/registrations/${id}/review`, data),
+  },
+  notifications: {
+    list: () => api.get('/notifications'),
+    unreadCount: () => api.get('/notifications/unread-count'),
+    markRead: (id) => api.patch(`/notifications/${id}/read`),
+    markAllRead: () => api.post('/notifications/read-all'),
+  },
   referees: {
     list: () => api.get('/referees'),
     create: (data) => api.post('/referees', data),

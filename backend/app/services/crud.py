@@ -39,10 +39,20 @@ def list_archived_scoped(db: Session, model, *, organization_id: uuid.UUID, **fi
     return db.execute(stmt.order_by(model.deleted_at.desc())).scalars().all()
 
 
-def get_scoped_or_404(db: Session, model, *, organization_id: uuid.UUID, record_id: uuid.UUID, include_archived: bool = False):
+def get_scoped_or_404(
+    db: Session,
+    model,
+    *,
+    organization_id: uuid.UUID,
+    record_id: uuid.UUID,
+    include_archived: bool = False,
+    options: list | None = None,
+):
     stmt = select(model).where(model.organization_id == organization_id, model.id == record_id)
     if not include_archived:
         stmt = _active_filter(model, stmt)
+    if options:
+        stmt = stmt.options(*options)
     obj = db.execute(stmt).scalar_one_or_none()
     if obj is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{model.__name__} not found")
