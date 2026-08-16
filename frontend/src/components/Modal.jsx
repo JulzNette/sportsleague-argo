@@ -1,7 +1,7 @@
 export default function Modal({ title, subtitle, onClose, children, footer }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="card w-full max-w-lg max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/50 p-3 sm:p-4">
+      <div className="card w-full max-w-lg max-h-[92vh] flex flex-col">
         <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200">
           <div>
             <h3 className="font-semibold text-gray-900">{title}</h3>

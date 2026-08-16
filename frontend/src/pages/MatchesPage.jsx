@@ -156,7 +156,7 @@ export default function MatchesPage() {
           </>}
         >
           <ErrorBanner error={error} />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Season">
               <select className="input" value={form.season_id} onChange={(e) => setForm({ ...form, season_id: e.target.value, division_id: '', home_team_id: '', away_team_id: '' })}>
                 {seasons?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -169,7 +169,7 @@ export default function MatchesPage() {
               </select>
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Home team">
               <select className="input" value={form.home_team_id} onChange={(e) => setForm({ ...form, home_team_id: e.target.value })}>
                 <option value="">Select...</option>
@@ -183,12 +183,12 @@ export default function MatchesPage() {
               </select>
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Date"><input type="date" className="input" value={form.scheduled_date} onChange={(e) => setForm({ ...form, scheduled_date: e.target.value })} /></Field>
             <Field label="Time"><input type="time" className="input" value={form.scheduled_time} onChange={(e) => setForm({ ...form, scheduled_time: e.target.value })} /></Field>
           </div>
           <Field label="Venue"><input className="input" value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} /></Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Round #"><input type="number" min={0} className="input" value={form.round_number} onChange={(e) => setForm({ ...form, round_number: Number(e.target.value) })} /></Field>
             <Field label="Match type">
               <select className="input" value={form.match_type} onChange={(e) => setForm({ ...form, match_type: e.target.value })}>
@@ -262,7 +262,7 @@ export default function MatchesPage() {
             </select>
           </Field>
           {resultForm.result_type !== 'Forfeit' ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label={`${teamName(modal.match.home_team_id)} score`}>
                 <input type="number" min={0} className="input" value={resultForm.home_score} onChange={(e) => setResultForm({ ...resultForm, home_score: Number(e.target.value) })} />
               </Field>
@@ -314,7 +314,7 @@ export default function MatchesPage() {
                   const v = statsForm[p.id] || { points: 0, assists: 0, fouls: 0, rebounds: 0, steals: 0 }
                   const setStat = (k) => (e) => setStatsForm({ ...statsForm, [p.id]: { ...v, [k]: Math.max(0, Number(e.target.value)) } })
                   return (
-                    <div key={p.id} className="border border-gray-200 rounded-md px-3 py-2 grid grid-cols-6 gap-2 items-center">
+                    <div key={p.id} className="border border-gray-200 rounded-md px-3 py-2 grid grid-cols-2 sm:grid-cols-6 gap-2 items-center">
                       <span className="col-span-1 text-sm font-medium text-gray-900 truncate">{p.full_name}</span>
                       {[['points', 'PTS'], ['assists', 'AST'], ['rebounds', 'REB'], ['steals', 'STL'], ['fouls', 'FLS']].map(([k, label]) => (
                         <label key={k} className="flex flex-col">

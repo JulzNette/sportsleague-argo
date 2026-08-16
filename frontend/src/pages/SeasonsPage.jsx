@@ -110,7 +110,7 @@ export default function SeasonsPage() {
           <Field label="Name">
             <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Start date">
               <input type="date" className="input" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
             </Field>

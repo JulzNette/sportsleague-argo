@@ -155,9 +155,9 @@ export default function RegisterTeamPage() {
     <div className="max-w-3xl">
       <PageHead title="Register a team" subtitle="Apply to join a division — approval auto-creates your team and roster." />
 
-      <ol className="flex items-center gap-0 mb-5">
+      <ol className="flex items-center gap-0 mb-5 overflow-x-auto">
         {STEPS.map((label, i) => (
-          <li key={label} className="flex items-center flex-1 last:flex-none">
+          <li key={label} className="flex items-center flex-1 last:flex-none whitespace-nowrap">
             <button
               type="button"
               onClick={() => i < step && setStep(i)}

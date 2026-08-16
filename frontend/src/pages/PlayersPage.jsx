@@ -183,7 +183,7 @@ export default function PlayersPage() {
             </select>
           </Field>
           <Field label="Full name"><input className="input" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Position"><input className="input" value={form.position || ''} onChange={(e) => setForm({ ...form, position: e.target.value })} /></Field>
             <Field label="Jersey #"><input className="input" value={form.jersey_number} onChange={(e) => setForm({ ...form, jersey_number: e.target.value })} /></Field>
           </div>
