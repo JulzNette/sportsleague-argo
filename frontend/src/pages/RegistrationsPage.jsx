@@ -75,6 +75,15 @@ export default function RegistrationsPage() {
     }
   }, [searchParams, registrations, selected])
 
+  if (!can(role, 'registration.submit')) {
+    return (
+      <div className="card p-10 text-center text-gray-400">
+        <i className="bi bi-lock text-2xl" />
+        <p className="mt-2 text-sm">You don't have access to Registrations.</p>
+      </div>
+    )
+  }
+
   return (
     <div>
       <PageHead
