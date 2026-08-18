@@ -38,12 +38,15 @@ def _login(client, email):
     return {"Authorization": f"Bearer {res.json()['access_token']}"}
 
 
-def _register_viewer(client, email):
-    res = client.post("/api/v1/auth/register", json={
-        "full_name": "Viewer", "email": email, "password": "password123",
-    })
-    assert res.status_code == 201
-    return {"Authorization": f"Bearer {res.json()['access_token']}"}
+def _register_viewer(client, dbsession, org, email):
+    """Create a Team Manager account and return auth headers."""
+    user = User(
+        organization_id=org.id, email=email, hashed_password=hash_password("Admin123"),
+        full_name="Team Manager", role="Team Manager", is_active=True,
+    )
+    dbsession.add(user)
+    dbsession.commit()
+    return _login(client, email)
 
 
 def _submit(client, headers, division_id, team_name="Silver Sharks"):
@@ -58,7 +61,7 @@ def test_submission_notifies_reviewers(client, dbsession, org, season_division_t
     _make_user(dbsession, org, "admin.alert@example.com", "League Administrator")
     _make_user(dbsession, org, "manager.alert@example.com", "Season Manager")
     reviewer = _login(client, "admin.alert@example.com")
-    submitter = _register_viewer(client, "viewer.alert@example.com")
+    submitter = _register_viewer(client, dbsession, org, "viewer.alert@example.com")
     _, division, _ = season_division_teams
 
     res = _submit(client, submitter, division.id)
@@ -74,8 +77,8 @@ def test_submission_notifies_reviewers(client, dbsession, org, season_division_t
         assert note["is_read"] is False
 
 
-def test_submitter_gets_no_notification_for_own_submission(client, season_division_teams):
-    submitter = _register_viewer(client, "viewer.own@example.com")
+def test_submitter_gets_no_notification_for_own_submission(client, dbsession, org, season_division_teams):
+    submitter = _register_viewer(client, dbsession, org, "viewer.own@example.com")
     _, division, _ = season_division_teams
     _submit(client, submitter, division.id)
 
@@ -86,7 +89,7 @@ def test_submitter_gets_no_notification_for_own_submission(client, season_divisi
 def test_approval_notifies_submitter(client, dbsession, org, season_division_teams):
     _make_user(dbsession, org, "admin.decision@example.com", "League Administrator")
     admin = _login(client, "admin.decision@example.com")
-    submitter = _register_viewer(client, "viewer.decision@example.com")
+    submitter = _register_viewer(client, dbsession, org, "viewer.decision@example.com")
     _, division, _ = season_division_teams
     reg_id = _submit(client, submitter, division.id).json()["id"]
 
@@ -107,7 +110,7 @@ def test_approval_notifies_submitter(client, dbsession, org, season_division_tea
 def test_rejection_notifies_submitter(client, dbsession, org, season_division_teams):
     _make_user(dbsession, org, "admin.deny@example.com", "Season Manager")
     admin = _login(client, "admin.deny@example.com")
-    submitter = _register_viewer(client, "viewer.deny@example.com")
+    submitter = _register_viewer(client, dbsession, org, "viewer.deny@example.com")
     _, division, _ = season_division_teams
     reg_id = _submit(client, submitter, division.id).json()["id"]
 
@@ -125,7 +128,7 @@ def test_rejection_notifies_submitter(client, dbsession, org, season_division_te
 def test_unread_count_and_mark_read(client, dbsession, org, season_division_teams):
     _make_user(dbsession, org, "admin.unread@example.com", "League Administrator")
     admin = _login(client, "admin.unread@example.com")
-    submitter = _register_viewer(client, "viewer.unread@example.com")
+    submitter = _register_viewer(client, dbsession, org, "viewer.unread@example.com")
     _, division, _ = season_division_teams
     _submit(client, submitter, division.id, team_name="Team Unread One")
     _submit(client, submitter, division.id, team_name="Team Unread Two")

@@ -35,7 +35,7 @@ PERMISSIONS: dict[str, list[str]] = {
         "League Administrator", "Season Manager", "Team Manager", "System Administrator",
     ],
     "registration.view": _ALL_ROLES,
-    "registration.submit": _ALL_ROLES,
+    "registration.submit": ["League Administrator", "Season Manager", "Team Manager", "System Administrator"],
     "registration.review": ["League Administrator", "Season Manager", "System Administrator"],
     "player.view": _ALL_ROLES,
     "player.create": ["League Administrator", "Season Manager", "Team Manager", "System Administrator"],

@@ -41,12 +41,15 @@ def _login(client, email):
     return {"Authorization": f"Bearer {res.json()['access_token']}"}
 
 
-def _register_viewer(client, email):
-    res = client.post("/api/v1/auth/register", json={
-        "full_name": "Viewer", "email": email, "password": "password123",
-    })
-    assert res.status_code == 201
-    return {"Authorization": f"Bearer {res.json()['access_token']}"}
+def _register_viewer(client, dbsession, org, email):
+    """Create a Team Manager account and return auth headers."""
+    user = User(
+        organization_id=org.id, email=email, hashed_password=hash_password("Admin123"),
+        full_name="Team Manager", role="Team Manager", is_active=True,
+    )
+    dbsession.add(user)
+    dbsession.commit()
+    return _login(client, email)
 
 
 def _submit(client, headers, division_id, **overrides):
@@ -54,9 +57,9 @@ def _submit(client, headers, division_id, **overrides):
     return client.post("/api/v1/registrations", json=payload, headers=headers)
 
 
-def test_any_user_can_submit_registration(client, season_division_teams):
+def test_any_user_can_submit_registration(client, dbsession, org, season_division_teams):
     _, division, _ = season_division_teams
-    headers = _register_viewer(client, "viewer.submit@example.com")
+    headers = _register_viewer(client, dbsession, org, "viewer.submit@example.com")
 
     res = _submit(client, headers, division.id)
 
@@ -111,9 +114,9 @@ def test_rejection_does_not_create_team(client, dbsession, org, season_division_
     assert not any(t["name"] == "Silver Sharks" for t in teams)
 
 
-def test_review_requires_review_permission(client, season_division_teams):
+def test_review_requires_review_permission(client, dbsession, org, season_division_teams):
     _, division, _ = season_division_teams
-    headers = _register_viewer(client, "viewer.review@example.com")
+    headers = _register_viewer(client, dbsession, org, "viewer.review@example.com")
     reg_id = _submit(client, headers, division.id).json()["id"]
 
     res = client.patch(
@@ -146,10 +149,10 @@ def test_cannot_review_twice(client, dbsession, org, season_division_teams):
     assert second.status_code == 400
 
 
-def test_non_reviewer_only_sees_own_registrations(client, season_division_teams):
+def test_non_reviewer_only_sees_own_registrations(client, dbsession, org, season_division_teams):
     _, division, _ = season_division_teams
-    viewer_a = _register_viewer(client, "viewer.a@example.com")
-    viewer_b = _register_viewer(client, "viewer.b@example.com")
+    viewer_a = _register_viewer(client, dbsession, org, "viewer.a@example.com")
+    viewer_b = _register_viewer(client, dbsession, org, "viewer.b@example.com")
 
     _submit(client, viewer_a, division.id, team_name="Team Alpha")
     _submit(client, viewer_b, division.id, team_name="Team Beta")
@@ -161,7 +164,7 @@ def test_non_reviewer_only_sees_own_registrations(client, season_division_teams)
 def test_reviewer_sees_all_registrations(client, dbsession, org, season_division_teams):
     _make_user(dbsession, org, "admin.all@example.com", "League Administrator")
     reviewer = _login(client, "admin.all@example.com")
-    viewer = _register_viewer(client, "viewer.c@example.com")
+    viewer = _register_viewer(client, dbsession, org, "viewer.c@example.com")
     _, division, _ = season_division_teams
 
     _submit(client, reviewer, division.id, team_name="Team One")

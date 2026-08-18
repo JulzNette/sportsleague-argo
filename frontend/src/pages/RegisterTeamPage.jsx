@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { endpoints } from '../lib/api'
 import { buildSportMaps } from '../lib/sports'
 import { SportBadge } from '../components/SportControls'
 import PageHead from '../components/PageHead'
 import ErrorBanner from '../components/ErrorBanner'
+import { useAuthStore } from '../store/authStore'
+import { can } from '../lib/permissions'
 
 const STEPS = ['Team & division', 'Players', 'Documents', 'Review & submit']
 
@@ -13,6 +15,9 @@ const EMPTY_PLAYER = { full_name: '', jersey_number: '', position: '', date_of_b
 const EMPTY_DOC = { player_full_name: '', document_type: '', file_name: '', notes: '' }
 
 export default function RegisterTeamPage() {
+  const role = useAuthStore((s) => s.role)
+  if (!can(role, 'registration.submit')) return <Navigate to="/registrations" replace />
+
   const { data: leagues = [] } = useQuery({ queryKey: ['leagues'], queryFn: () => endpoints.leagues.list().then((r) => r.data) })
   const { data: seasons = [] } = useQuery({ queryKey: ['seasons'], queryFn: () => endpoints.seasons.list().then((r) => r.data) })
   const { data: divisions = [] } = useQuery({ queryKey: ['divisions'], queryFn: () => endpoints.divisions.list().then((r) => r.data) })
