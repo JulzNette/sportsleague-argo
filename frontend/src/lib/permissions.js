@@ -33,7 +33,7 @@ export const PERMISSIONS = {
   'team.delete': ['League Administrator', 'System Administrator'],
   'team.manage_roster': ['League Administrator', 'Season Manager', 'Team Manager', 'System Administrator'],
   'registration.view': ALL,
-  'registration.submit': ALL,
+  'registration.submit': ['League Administrator', 'Season Manager', 'Team Manager', 'System Administrator'],
   'registration.review': ['League Administrator', 'Season Manager', 'System Administrator'],
   'player.view': ALL,
   'player.create': ['League Administrator', 'Season Manager', 'Team Manager', 'System Administrator'],
