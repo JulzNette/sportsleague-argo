@@ -12,6 +12,7 @@ PAYLOAD = {
     "coach_name": "Nina Ramos",
     "contact_email": "nina@example.com",
     "contact_phone": "09171234567",
+    "registration_fee": 1.0,
     "notes": "New team hoping to join.",
     "players": [
         {"full_name": "Jules Aquino", "jersey_number": "7", "position": "Guard",

@@ -26,7 +26,8 @@ export default function RegisterTeamPage({ standalone = false }) {
 
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
-    division_id: '', team_name: '', coach_name: '', contact_email: '', contact_phone: '', notes: '',
+    division_id: '', team_name: '', coach_name: '', contact_email: '', contact_phone: '',
+    registration_fee: '', notes: '',
     players: [{ ...EMPTY_PLAYER }],
     documents: [],
   })
@@ -62,6 +63,9 @@ export default function RegisterTeamPage({ standalone = false }) {
     if (step === 0) {
       if (!form.division_id) return 'Choose the division you want to join.'
       if (!form.team_name.trim()) return 'Enter a team name.'
+      if (form.registration_fee === '' || Number.isNaN(Number(form.registration_fee)) || Number(form.registration_fee) < 0) {
+        return 'Enter a valid registration fee.'
+      }
     }
     if (step === 1) {
       const filled = form.players.filter((p) => p.full_name.trim())
@@ -112,6 +116,7 @@ export default function RegisterTeamPage({ standalone = false }) {
       coach_name: form.coach_name?.trim() || null,
       contact_email: form.contact_email?.trim() || null,
       contact_phone: form.contact_phone?.trim() || null,
+      registration_fee: Number(form.registration_fee) || 0,
       notes: form.notes?.trim() || null,
       players,
       documents: cleanDocs(),
@@ -119,7 +124,7 @@ export default function RegisterTeamPage({ standalone = false }) {
   }
 
   function reset() {
-    setForm({ division_id: '', team_name: '', coach_name: '', contact_email: '', contact_phone: '', notes: '', players: [{ ...EMPTY_PLAYER }], documents: [] })
+    setForm({ division_id: '', team_name: '', coach_name: '', contact_email: '', contact_phone: '', registration_fee: '', notes: '', players: [{ ...EMPTY_PLAYER }], documents: [] })
     setSubmitted(null)
     setError(null)
     setStep(0)
@@ -138,6 +143,10 @@ export default function RegisterTeamPage({ standalone = false }) {
           <p className="text-sm text-gray-500 mt-1">
             Registration for <b>{divisionPath(submitted.division_id)}</b> is <b>Pending</b> review
             by the league administrator. Once approved, your team and roster will be created.
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            Registration fee: <b>₱{Number(submitted.registration_fee) || 0}</b> • Payment status: <b>{submitted.payment_status}</b>.
+            The administrator will email you at the address you provided once payment is processed.
           </p>
           {standalone && (
             <p className="text-xs text-gray-400 mt-2">
@@ -234,6 +243,14 @@ export default function RegisterTeamPage({ standalone = false }) {
               <label className="label">Contact phone</label>
               <input className="input" value={form.contact_phone} onChange={(e) => update('contact_phone', e.target.value)} />
             </div>
+          </div>
+          <div className="mb-3">
+            <label className="label">Registration fee</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₱</span>
+              <input type="number" min="0" step="0.01" className="input pl-7" value={form.registration_fee} onChange={(e) => update('registration_fee', e.target.value)} />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Enter the registration fee amount (e.g. 1 for one peso).</p>
           </div>
           <div className="mb-1">
             <label className="label">Notes</label>
@@ -332,6 +349,7 @@ export default function RegisterTeamPage({ standalone = false }) {
             <div className="flex justify-between gap-4"><dt className="text-gray-500">Team</dt><dd className="font-medium text-right">{form.team_name || '—'}</dd></div>
             <div className="flex justify-between gap-4"><dt className="text-gray-500">Coach</dt><dd className="font-medium text-right">{form.coach_name || '—'}</dd></div>
             <div className="flex justify-between gap-4"><dt className="text-gray-500">Contact</dt><dd className="font-medium text-right">{[form.contact_email, form.contact_phone].filter(Boolean).join(' • ') || '—'}</dd></div>
+            <div className="flex justify-between gap-4"><dt className="text-gray-500">Registration fee</dt><dd className="font-medium text-right">₱{Number(form.registration_fee) || 0}</dd></div>
           </dl>
           <div className="mt-4">
             <span className="text-sm font-medium text-gray-700">Roster ({cleanPlayers().length})</span>

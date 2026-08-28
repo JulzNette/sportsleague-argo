@@ -29,6 +29,8 @@ def create_registration(db: Session, *, organization_id: uuid.UUID, user_id: uui
         contact_phone=data.get("contact_phone"),
         notes=data.get("notes"),
         status="Pending",
+        registration_fee=data.get("registration_fee"),
+        payment_status="Pending",
     )
     registration.players = [
         RegistrationPlayer(
@@ -117,5 +119,24 @@ def review_registration(
                 "by an existing team in this division."
             ),
         ) from exc
+    db.refresh(registration)
+    return registration
+
+
+def set_payment_status(
+    db: Session,
+    *,
+    registration: Registration,
+    user_id: uuid.UUID,
+    payment_status: str,
+):
+    if payment_status not in ("Pending", "Paid"):
+        raise HTTPException(
+            status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid payment status '{payment_status}'.",
+        )
+    registration.payment_status = payment_status
+    registration.updated_by = user_id
+    db.commit()
     db.refresh(registration)
     return registration

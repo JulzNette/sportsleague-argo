@@ -92,6 +92,8 @@ export const endpoints = {
     get: (id) => api.get(`/registrations/${id}`),
     create: (data) => api.post('/registrations', data),
     review: (id, data) => api.patch(`/registrations/${id}/review`, data),
+    payment: (id, data) => api.patch(`/registrations/${id}/payment`, data),
+    email: (id) => api.post(`/registrations/${id}/email`),
   },
   notifications: {
     list: () => api.get('/notifications'),

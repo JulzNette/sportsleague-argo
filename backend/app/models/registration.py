@@ -7,7 +7,7 @@ review comment. Until then everything lives in the registration tables.
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import String, Date, Text, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import String, Date, Text, DateTime, ForeignKey, Numeric, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -34,6 +34,9 @@ class Registration(OrgAuditMixin, Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="Pending")
     # Pending | Approved | Rejected
+    registration_fee: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+    # Pending | Paid
+    payment_status: Mapped[str] = mapped_column(String(32), nullable=False, default="Pending")
     reviewed_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     review_comment: Mapped[str | None] = mapped_column(Text, nullable=True)

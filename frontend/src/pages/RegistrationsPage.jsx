@@ -33,6 +33,7 @@ export default function RegistrationsPage() {
   const [selected, setSelected] = useState(null)
   const [comment, setComment] = useState('')
   const [error, setError] = useState(null)
+  const [mailNotice, setMailNotice] = useState(null)
 
   const reviewMut = useMutation({
     mutationFn: ({ id, data }) => endpoints.registrations.review(id, data),
@@ -43,6 +44,29 @@ export default function RegistrationsPage() {
       qc.invalidateQueries({ queryKey: ['registrations'] })
       qc.invalidateQueries({ queryKey: ['teams'] })
       qc.invalidateQueries({ queryKey: ['players'] })
+    },
+    onError: setError,
+  })
+
+  const paymentMut = useMutation({
+    mutationFn: ({ id, data }) => endpoints.registrations.payment(id, data),
+    onSuccess: (res) => {
+      setSelected(res.data)
+      qc.invalidateQueries({ queryKey: ['registrations'] })
+    },
+    onError: setError,
+  })
+
+  const emailMut = useMutation({
+    mutationFn: (id) => endpoints.registrations.email(id),
+    onSuccess: (res) => {
+      const data = res.data
+      setMailNotice(
+        data.mode === 'smtp'
+          ? `Email sent to ${data.to}.`
+          : `Email simulated for ${data.to} (no SMTP credentials configured).`
+      )
+      qc.invalidateQueries({ queryKey: ['registrations'] })
     },
     onError: setError,
   })
@@ -58,9 +82,16 @@ export default function RegistrationsPage() {
     return [league?.name, season?.name, div.name].filter(Boolean).join(' / ')
   }
 
+  const fmtFee = (v) => (v == null ? '—' : `₱${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2 })}`)
+  const paymentBadge = (s) => (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${s === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+      {s}
+    </span>
+  )
+
   const visible = statusFilter ? registrations?.filter((r) => r.status === statusFilter) : registrations
 
-  function openDetail(r) { setSelected(r); setComment(''); setError(null) }
+  function openDetail(r) { setSelected(r); setComment(''); setError(null); setMailNotice(null) }
   function handleApprove() { if (selected) reviewMut.mutate({ id: selected.id, data: { status: 'Approved', review_comment: comment || null } }) }
   function handleReject() { if (selected) reviewMut.mutate({ id: selected.id, data: { status: 'Rejected', review_comment: comment || null } }) }
 
@@ -112,11 +143,17 @@ export default function RegistrationsPage() {
               { key: 'players', label: 'Players', render: (r) => r.players.length },
               { key: 'submitted', label: 'Submitted', render: (r) => new Date(r.created_at).toLocaleDateString() },
               { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
+              { key: 'fee', label: 'Fee', render: (r) => <span className="font-medium">{fmtFee(r.registration_fee)}</span> },
+              { key: 'payment', label: 'Payment', render: (r) => paymentBadge(r.payment_status) },
             ]}
             rows={visible}
             actions={(row) => [
               { label: 'View', icon: 'bi-eye', onClick: () => openDetail(row) },
               ...(isReviewable(row) ? [{ label: 'Review', icon: 'bi-clipboard-check', onClick: () => openDetail(row) }] : []),
+              ...(canReview ? [
+                { label: row.payment_status === 'Paid' ? 'Mark unpaid' : 'Mark paid', icon: row.payment_status === 'Paid' ? 'bi-arrow-counterclockwise' : 'bi-check2-circle', onClick: () => paymentMut.mutate({ id: row.id, data: { payment_status: row.payment_status === 'Paid' ? 'Pending' : 'Paid' } }) },
+                { label: 'Email registrant', icon: 'bi-envelope', onClick: () => emailMut.mutate(row.id) },
+              ] : []),
             ]}
             emptyLabel="No registrations yet."
           />
@@ -131,6 +168,11 @@ export default function RegistrationsPage() {
           footer={<button className="btn btn-secondary" onClick={() => setSelected(null)}>Close</button>}
         >
           <ErrorBanner error={error} />
+          {mailNotice && (
+            <div className="rounded-md bg-blue-50 border border-blue-200 px-3.5 py-2.5 text-sm text-blue-700 mb-3 flex items-center gap-2">
+              <i className="bi bi-envelope-check" />{mailNotice}
+            </div>
+          )}
           <div className="flex items-center gap-2 mb-3">
             <Badge status={selected.status} />
             <SportBadge sport={sportOf.division(selected.division_id)} />
@@ -140,6 +182,8 @@ export default function RegistrationsPage() {
             <div className="flex justify-between gap-4"><dt className="text-gray-500">Coach</dt><dd className="font-medium text-right">{selected.coach_name || '—'}</dd></div>
             <div className="flex justify-between gap-4"><dt className="text-gray-500">Contact</dt><dd className="font-medium text-right">{[selected.contact_email, selected.contact_phone].filter(Boolean).join(' • ') || '—'}</dd></div>
             <div className="flex justify-between gap-4"><dt className="text-gray-500">Submitted</dt><dd className="font-medium text-right">{new Date(selected.created_at).toLocaleString()}</dd></div>
+            <div className="flex justify-between gap-4"><dt className="text-gray-500">Registration fee</dt><dd className="font-medium text-right">{fmtFee(selected.registration_fee)}</dd></div>
+            <div className="flex justify-between gap-4 items-center"><dt className="text-gray-500">Payment</dt><dd className="text-right">{paymentBadge(selected.payment_status)}</dd></div>
             {selected.reviewed_at && (
               <div className="flex justify-between gap-4"><dt className="text-gray-500">Reviewed</dt><dd className="font-medium text-right">{new Date(selected.reviewed_at).toLocaleString()}</dd></div>
             )}
@@ -197,6 +241,28 @@ export default function RegistrationsPage() {
           {selected.status === 'Approved' && (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700 mb-4 flex items-center gap-2">
               <i className="bi bi-check-circle" />Team and roster created — find it under Teams.
+            </div>
+          )}
+
+          {canReview && (
+            <div className="border border-gray-200 rounded-lg p-3.5 mb-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="text-sm">
+                  <div className="font-semibold text-gray-900">Registration fee: {fmtFee(selected.registration_fee)}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Payment status: <b>{selected.payment_status}</b></div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="btn btn-secondary" disabled={paymentMut.isPending} onClick={() => paymentMut.mutate({ id: selected.id, data: { payment_status: selected.payment_status === 'Paid' ? 'Pending' : 'Paid' } })}>
+                    <i className="bi bi-credit-card" />{selected.payment_status === 'Paid' ? 'Mark unpaid' : 'Mark paid'}
+                  </button>
+                  <button className="btn btn-primary" disabled={emailMut.isPending} onClick={() => emailMut.mutate(selected.id)}>
+                    <i className="bi bi-envelope" />{emailMut.isPending ? 'Sending...' : 'Email registrant'}
+                  </button>
+                </div>
+              </div>
+              {selected.contact_email
+                ? <p className="text-xs text-gray-400 mt-2">Emails go to <b>{selected.contact_email}</b>.</p>
+                : <p className="text-xs text-rose-500 mt-2">No contact email on this registration.</p>}
             </div>
           )}
 

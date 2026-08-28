@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr, Field
 from app.schemas.common import AuditFieldsOut
 
 _STATUS = "^(Pending|Approved|Rejected)$"
+_PAYMENT = "^(Pending|Paid)$"
 
 
 class RegistrationPlayerIn(BaseModel):
@@ -30,6 +31,7 @@ class RegistrationCreate(BaseModel):
     coach_name: str | None = Field(default=None, max_length=255)
     contact_email: EmailStr | None = None
     contact_phone: str | None = Field(default=None, max_length=32)
+    registration_fee: float = Field(ge=0, description="Registration fee (amount typed by the registrant)")
     notes: str | None = None
     players: list[RegistrationPlayerIn] = Field(min_length=1)
     documents: list[RegistrationDocumentIn] = []
@@ -38,6 +40,10 @@ class RegistrationCreate(BaseModel):
 class RegistrationReview(BaseModel):
     status: str = Field(pattern="^(Approved|Rejected)$")
     review_comment: str | None = Field(default=None, max_length=2000)
+
+
+class PaymentUpdate(BaseModel):
+    payment_status: str = Field(pattern=_PAYMENT)
 
 
 class RegistrationPlayerOut(AuditFieldsOut):
@@ -61,6 +67,8 @@ class RegistrationOut(AuditFieldsOut):
     coach_name: str | None
     contact_email: EmailStr | None
     contact_phone: str | None
+    registration_fee: float | None
+    payment_status: str
     notes: str | None
     status: str
     reviewed_by: uuid.UUID | None
