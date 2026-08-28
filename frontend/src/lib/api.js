@@ -21,7 +21,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const hadToken = useAuthStore.getState().token
       useAuthStore.getState().logout()
+      // Auto-logout (expired/invalid token) also goes back to the landing page.
+      // Only redirect if we were actually logged in, so a failed login attempt
+      // doesn't bounce the visitor off the login/signup screen.
+      if (hadToken && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
+        window.location.href = '/'
+      }
     }
     return Promise.reject(error)
   }
