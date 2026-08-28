@@ -9,6 +9,7 @@ from app.models.match import Match
 from app.models.team import Team
 from app.models.division import Division
 from app.models.season import Season
+from app.models.league import League
 from app.models.stub import Organization
 from app.models.match_result import MatchResult
 from app.schemas.match import MatchCreate, MatchOut, MatchStatusUpdate, MatchUpdate, PublicMatchOut
@@ -19,7 +20,11 @@ router = APIRouter(prefix="/matches", tags=["Matches"])
 
 @router.get("/public", response_model=list[PublicMatchOut], summary="Public Match Schedule")
 def public_schedule(db: Session = Depends(get_db_session)):
-    """Public read-only schedule for the landing page. No auth required."""
+    """Public read-only schedule for the landing page. No auth required.
+
+    Shows only upcoming/in-progress matches (completed ones are dropped) and
+    only basketball — the sport the public landing page showcases.
+    """
     org = db.execute(select(Organization).limit(1)).scalar_one_or_none()
     if org is None:
         return []
@@ -33,8 +38,14 @@ def public_schedule(db: Session = Depends(get_db_session)):
             .join(AwayTeam, AwayTeam.id == Match.away_team_id)
             .join(Division, Division.id == Match.division_id)
             .join(Season, Season.id == Match.season_id)
+            .join(League, League.id == Season.league_id)
             .outerjoin(MatchResult, MatchResult.match_id == Match.id)
-            .where(Match.organization_id == org.id, Match.deleted_at.is_(None))
+            .where(
+                Match.organization_id == org.id,
+                Match.deleted_at.is_(None),
+                Match.status.in_(["Scheduled", "In Progress", "Postponed"]),
+                League.sport_type.ilike("%basketball%"),
+            )
             .order_by(Match.scheduled_date, Match.scheduled_time)
         )
         .all()

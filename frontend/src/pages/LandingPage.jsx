@@ -228,10 +228,6 @@ export default function LandingPage() {
                 <h4 style={{ fontSize: 17, fontWeight: 700 }}>
                   {m.home_team} <span style={{ color: C.dim, fontWeight: 500 }}>vs</span> {m.away_team}
                 </h4>
-                <p style={{ color: C.dim, fontSize: 13, marginTop: 3 }}>
-                  {[m.division, m.venue].filter(Boolean).join(' &middot; ')}
-                  {m.match_type === 'Playoff' ? ` &middot; Playoff` : ''}
-                </p>
               </div>
               <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: statusColor(m.status), border: '1px solid #E7E4DC', padding: '6px 12px', borderRadius: 100, whiteSpace: 'nowrap' }}>
                 {m.status}
