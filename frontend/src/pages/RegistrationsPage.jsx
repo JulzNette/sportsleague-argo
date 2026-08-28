@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { endpoints } from '../lib/api'
+import { sendRegistrationApproved, sendPaymentReceived, sendFeeReminder } from '../lib/email'
 import { can } from '../lib/permissions'
 import { useAuthStore } from '../store/authStore'
 import { buildSportMaps } from '../lib/sports'
@@ -44,6 +45,10 @@ export default function RegistrationsPage() {
       qc.invalidateQueries({ queryKey: ['registrations'] })
       qc.invalidateQueries({ queryKey: ['teams'] })
       qc.invalidateQueries({ queryKey: ['players'] })
+      // Email the registrant when their registration is approved.
+      if (res.data?.status === 'Approved') {
+        sendRegistrationApproved(res.data, comment)
+      }
     },
     onError: setError,
   })
@@ -53,18 +58,21 @@ export default function RegistrationsPage() {
     onSuccess: (res) => {
       setSelected(res.data)
       qc.invalidateQueries({ queryKey: ['registrations'] })
+      // Email the registrant when their fee has been received.
+      if (res.data?.payment_status === 'Paid') {
+        sendPaymentReceived(res.data)
+      }
     },
     onError: setError,
   })
 
   const emailMut = useMutation({
-    mutationFn: (id) => endpoints.registrations.email(id),
+    mutationFn: (reg) => sendFeeReminder(reg),
     onSuccess: (res) => {
-      const data = res.data
       setMailNotice(
-        data.mode === 'smtp'
-          ? `Email sent to ${data.to}.`
-          : `Email simulated for ${data.to} (no SMTP credentials configured).`
+        res.sent
+          ? `Emailed the registrant about their registration fee.`
+          : `Email not sent (${res.error || 'unavailable'}). Check EmailJS template config.`
       )
       qc.invalidateQueries({ queryKey: ['registrations'] })
     },
@@ -152,7 +160,7 @@ export default function RegistrationsPage() {
               ...(isReviewable(row) ? [{ label: 'Review', icon: 'bi-clipboard-check', onClick: () => openDetail(row) }] : []),
               ...(canReview ? [
                 { label: row.payment_status === 'Paid' ? 'Mark unpaid' : 'Mark paid', icon: row.payment_status === 'Paid' ? 'bi-arrow-counterclockwise' : 'bi-check2-circle', onClick: () => paymentMut.mutate({ id: row.id, data: { payment_status: row.payment_status === 'Paid' ? 'Pending' : 'Paid' } }) },
-                { label: 'Email registrant', icon: 'bi-envelope', onClick: () => emailMut.mutate(row.id) },
+                { label: 'Email registrant', icon: 'bi-envelope', onClick: () => emailMut.mutate(row) },
               ] : []),
             ]}
             emptyLabel="No registrations yet."
@@ -255,7 +263,7 @@ export default function RegistrationsPage() {
                   <button className="btn btn-secondary" disabled={paymentMut.isPending} onClick={() => paymentMut.mutate({ id: selected.id, data: { payment_status: selected.payment_status === 'Paid' ? 'Pending' : 'Paid' } })}>
                     <i className="bi bi-credit-card" />{selected.payment_status === 'Paid' ? 'Mark unpaid' : 'Mark paid'}
                   </button>
-                  <button className="btn btn-primary" disabled={emailMut.isPending} onClick={() => emailMut.mutate(selected.id)}>
+                  <button className="btn btn-primary" disabled={emailMut.isPending} onClick={() => emailMut.mutate(selected)}>
                     <i className="bi bi-envelope" />{emailMut.isPending ? 'Sending...' : 'Email registrant'}
                   </button>
                 </div>
