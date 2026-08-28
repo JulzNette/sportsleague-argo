@@ -47,3 +47,19 @@ class MatchStatusUpdate(BaseModel):
 class MatchOut(MatchBase, AuditFieldsOut):
     status: str
     result: MatchResultOut | None = None
+
+
+class PublicMatchOut(BaseModel):
+    id: uuid.UUID
+    home_team: str
+    away_team: str
+    division: str | None = None
+    season: str | None = None
+    scheduled_date: date
+    scheduled_time: time
+    venue: str
+    round_number: int
+    match_type: str
+    status: str
+    home_score: int | None = None
+    away_score: int | None = None

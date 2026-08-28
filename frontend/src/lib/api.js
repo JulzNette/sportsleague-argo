@@ -103,6 +103,7 @@ export const endpoints = {
   },
   matches: {
     list: (params) => api.get('/matches', { params }),
+    publicSchedule: () => api.get('/matches/public'),
     create: (data) => api.post('/matches', data),
     update: (id, data) => api.patch(`/matches/${id}`, data),
     assignReferee: (id, refereeId) =>

@@ -1,14 +1,63 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload, aliased
 
 from app.core.deps import CurrentUser, get_db_session, require_permission
 from app.core.state_machines import MATCH_STATUS_TRANSITIONS, is_valid_transition
 from app.models.match import Match
-from app.schemas.match import MatchCreate, MatchOut, MatchStatusUpdate, MatchUpdate
+from app.models.team import Team
+from app.models.division import Division
+from app.models.season import Season
+from app.models.stub import Organization
+from app.models.match_result import MatchResult
+from app.schemas.match import MatchCreate, MatchOut, MatchStatusUpdate, MatchUpdate, PublicMatchOut
 from app.services import crud
 
 router = APIRouter(prefix="/matches", tags=["Matches"])
+
+
+@router.get("/public", response_model=list[PublicMatchOut], summary="Public Match Schedule")
+def public_schedule(db: Session = Depends(get_db_session)):
+    """Public read-only schedule for the landing page. No auth required."""
+    org = db.execute(select(Organization).limit(1)).scalar_one_or_none()
+    if org is None:
+        return []
+    HomeTeam = aliased(Team)
+    AwayTeam = aliased(Team)
+    rows = (
+        db.execute(
+            select(Match, HomeTeam.name.label("home_name"), AwayTeam.name.label("away_name"),
+                   Division.name.label("division_name"), Season.name.label("season_name"), MatchResult)
+            .join(HomeTeam, HomeTeam.id == Match.home_team_id)
+            .join(AwayTeam, AwayTeam.id == Match.away_team_id)
+            .join(Division, Division.id == Match.division_id)
+            .join(Season, Season.id == Match.season_id)
+            .outerjoin(MatchResult, MatchResult.match_id == Match.id)
+            .where(Match.organization_id == org.id, Match.deleted_at.is_(None))
+            .order_by(Match.scheduled_date, Match.scheduled_time)
+        )
+        .all()
+    )
+    return [
+        PublicMatchOut(
+            id=m.id,
+            home_team=home_name,
+            away_team=away_name,
+            division=division_name,
+            season=season_name,
+            scheduled_date=m.scheduled_date,
+            scheduled_time=m.scheduled_time,
+            venue=m.venue,
+            round_number=m.round_number,
+            match_type=m.match_type,
+            status=m.status,
+            home_score=r.home_score if r else None,
+            away_score=r.away_score if r else None,
+        )
+        for (m, home_name, away_name, division_name, season_name, r) in rows
+    ]
+
 
 @router.get("", response_model=list[MatchOut], summary="List Matches")
 def list_matches(

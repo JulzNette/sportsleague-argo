@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { endpoints } from '../lib/api'
 
 const tipOff = new Date('2026-09-19T13:00:00+08:00').getTime()
 
@@ -83,6 +85,21 @@ const HEAD = { ...DISPLAY, fontSize: 'clamp(34px,5.5vw,64px)', maxWidth: '14ch',
 const SECT = { padding: 'clamp(70px,10vw,130px) clamp(20px,5vw,64px)', position: 'relative' }
 
 export default function LandingPage() {
+  const { data: schedule = [] } = useQuery({
+    queryKey: ['public-matches'],
+    queryFn: () => endpoints.matches.publicSchedule().then((r) => r.data),
+    refetchInterval: 60000,
+  })
+  const fmtTime = (t) => (t ? t.slice(0, 5) : '')
+  const fmtDate = (d) => {
+    if (!d) return ''
+    const dt = new Date(`${d}T00:00:00`)
+    const mon = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    return `${String(dt.getDate()).padStart(2, '0')} ${mon[dt.getMonth()]}`
+  }
+  const statusColor = (s) =>
+    s === 'Scheduled' ? C.blue : (s === 'Completed' ? '#059669' : (s === 'In Progress' ? '#D97706' : C.dim))
+
   return (
     <div style={{ background: C.ink, color: C.chalk, fontFamily: "'Work Sans', sans-serif", overflowX: 'hidden' }}>
       {/* NAV */}
@@ -194,17 +211,31 @@ export default function LandingPage() {
       <section id="schedule" style={SECT}>
         <div style={KICKER}>Schedule<span style={{ flex: 1, height: 1, background: '#E7E4DC' }} /></div>
         <h2 style={HEAD}>Two weekends. One champion per bracket.</h2>
+        <p style={{ maxWidth: 600, color: C.dim, fontSize: 17, lineHeight: 1.7 }}>Live from the league schedule — every matchup below comes straight from the league's match scheduling.</p>
         <div style={{ marginTop: 50, borderTop: '1px solid #E7E4DC' }}>
-          {[
-            { day: 'SEP 19', title: "Group Stage — Open Men's & Women's", tag: 'Sat, 1PM' },
-            { day: 'SEP 20', title: 'Group Stage — 18-Under & 35+ Masters', tag: 'Sun, 1PM' },
-            { day: 'SEP 26', title: 'Quarterfinals & Semifinals, All Divisions', tag: 'Sat, 12PM' },
-            { day: 'SEP 27', title: 'Finals & Awarding Night', tag: 'Sun, 3PM' },
-          ].map((s) => (
-            <div key={s.day} style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 24, alignItems: 'center', padding: '22px 0', borderBottom: '1px solid #E7E4DC' }}>
-              <span style={{ ...MONO, color: C.accent, fontSize: 14 }}>{s.day}</span>
-              <h4 style={{ fontSize: 17, fontWeight: 700 }}>{s.title}</h4>
-              <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.blue, border: `1px solid ${C.blueDim}`, padding: '6px 12px', borderRadius: 100, whiteSpace: 'nowrap' }}>{s.tag}</span>
+          {schedule.length === 0 && (
+            <div style={{ padding: '40px 0', borderBottom: '1px solid #E7E4DC', color: C.dim, fontSize: 14 }}>
+              No matches are scheduled yet. Check back soon.
+            </div>
+          )}
+          {schedule.map((m, i) => (
+            <div key={m.id || i} style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 24, alignItems: 'center', padding: '22px 0', borderBottom: '1px solid #E7E4DC' }}>
+              <div>
+                <span style={{ ...MONO, color: C.accent, fontSize: 14, display: 'block' }}>{fmtDate(m.scheduled_date)}</span>
+                {m.scheduled_time && <span style={{ ...MONO, color: C.blue, fontSize: 12 }}>{fmtTime(m.scheduled_time)}</span>}
+              </div>
+              <div>
+                <h4 style={{ fontSize: 17, fontWeight: 700 }}>
+                  {m.home_team} <span style={{ color: C.dim, fontWeight: 500 }}>vs</span> {m.away_team}
+                </h4>
+                <p style={{ color: C.dim, fontSize: 13, marginTop: 3 }}>
+                  {[m.division, m.venue].filter(Boolean).join(' &middot; ')}
+                  {m.match_type === 'Playoff' ? ` &middot; Playoff` : ''}
+                </p>
+              </div>
+              <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: statusColor(m.status), border: '1px solid #E7E4DC', padding: '6px 12px', borderRadius: 100, whiteSpace: 'nowrap' }}>
+                {m.status}
+              </span>
             </div>
           ))}
         </div>
