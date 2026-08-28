@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { endpoints } from '../lib/api'
+import { sendRegistrationAck } from '../lib/email'
 import { buildSportMaps } from '../lib/sports'
 import { SportBadge } from '../components/SportControls'
 import PageHead from '../components/PageHead'
@@ -39,6 +40,16 @@ export default function RegisterTeamPage({ standalone = false }) {
     onSuccess: (res) => {
       setSubmitted(res.data)
       qc.invalidateQueries({ queryKey: ['my-registrations'] })
+      // Notify the registrant by email (EmailJS, sent from the browser).
+      if (res.data?.contact_email) {
+        sendRegistrationAck({
+          to_email: res.data.contact_email,
+          team_name: res.data.team_name,
+          coach_name: res.data.coach_name,
+          registration_fee: res.data.registration_fee,
+          payment_status: res.data.payment_status,
+        })
+      }
     },
     onError: setError,
   })
