@@ -61,7 +61,7 @@ export default function Layout({ children }) {
 
   function handleLogout() {
     logout()
-    navigate('/login')
+    window.location.href = '/'
   }
 
   function closeSidebar() { setSidebarOpen(false) }
