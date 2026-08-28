@@ -7,6 +7,7 @@ import ErrorBanner from '../components/ErrorBanner'
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState(null)
@@ -29,7 +30,7 @@ export default function RegisterPage() {
     }
     setLoading(true)
     try {
-      const res = await endpoints.register({ full_name: fullName, email, password })
+      const res = await endpoints.register({ full_name: fullName, email, contact_phone: contactPhone, password })
       login({ access_token: res.data.access_token, role: res.data.role, email })
       navigate(next)
     } catch (err) {
@@ -52,11 +53,6 @@ export default function RegisterPage() {
 
         <ErrorBanner error={error} />
 
-        <div className="mb-4 rounded-md bg-sky-50 border border-sky-200 px-3 py-2.5 text-xs text-sky-800">
-          New accounts are <b>view-only</b> — you can follow leagues, teams, matches and standings, but only a
-          System Administrator can add or edit data.
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="label">Full name</label>
@@ -65,6 +61,10 @@ export default function RegisterPage() {
           <div className="mb-3">
             <label className="label">Email</label>
             <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+          <div className="mb-3">
+            <label className="label">Contact number</label>
+            <input className="input" type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09XX XXX XXXX" />
           </div>
           <div className="mb-3">
             <label className="label">Password</label>

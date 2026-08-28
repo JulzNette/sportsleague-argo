@@ -70,6 +70,7 @@ def register(request: Request, payload: RegisterRequest, db: Session = Depends(g
         email=email,
         hashed_password=hash_password(payload.password),
         full_name=payload.full_name,
+        contact_phone=payload.contact_phone,
         role="Viewer",
         is_active=True,
     )
