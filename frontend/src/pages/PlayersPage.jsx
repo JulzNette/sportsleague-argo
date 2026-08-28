@@ -30,7 +30,7 @@ export default function PlayersPage() {
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [error, setError] = useState(null)
-  const [sportFilter, setSportFilter] = useState('')
+  const [sportFilter, setSportFilter] = useState('Basketball')
 
   const teamName = (id) => teams?.find((t) => t.id === id)?.name || 'Unassigned'
 
@@ -79,7 +79,7 @@ export default function PlayersPage() {
       }))
   }, [players, teams, sportFilter])
 
-  const total = players?.length ?? 0
+  const total = groups.reduce((n, g) => n + g.count, 0)
 
   return (
     <div>

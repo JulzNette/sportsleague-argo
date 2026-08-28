@@ -27,11 +27,13 @@ export default function TeamsPage() {
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [error, setError] = useState(null)
-  const [sportFilter, setSportFilter] = useState('')
+  const [sportFilter, setSportFilter] = useState('Basketball')
 
   const divisionName = (id) => divisions?.find((d) => d.id === id)?.name || '—'
 
-  const visibleTeams = sportFilter ? teams?.filter((t) => sportOf.team(t.id) === sportFilter) : teams
+  let visibleTeams = teams
+  if (sportFilter) visibleTeams = visibleTeams?.filter((t) => sportOf.team(t.id) === sportFilter)
+  if (!sportFilter) visibleTeams = visibleTeams?.filter((t) => sportOf.team(t.id) === 'Basketball')
 
   const createMut = useMutation({
     mutationFn: (data) => endpoints.teams.create(data),
