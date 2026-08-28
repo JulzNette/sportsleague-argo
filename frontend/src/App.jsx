@@ -29,17 +29,20 @@ const queryClient = new QueryClient({
 
 function usePendingManager() {
   const role = useAuthStore((s) => s.role)
-  const { data = [] } = useQuery({
-    queryKey: ['my-registrations'],
+  const email = useAuthStore((s) => s.email)
+  const { data = [], isFetched } = useQuery({
+    queryKey: ['my-registrations', email],
     queryFn: () => endpoints.registrations.list().then((r) => r.data),
-    enabled: role === 'Team Manager',
+    enabled: role === 'Team Manager' && !!email,
   })
   const isManagerRole = role === 'Team Manager'
-  return { pending: isManagerRole && data.length === 0, isManagerRole }
+  const pending = isManagerRole && isFetched && data.length === 0
+  return { pending, isManagerRole, ready: !isManagerRole || isFetched }
 }
 
 function Protected({ children }) {
-  const { pending } = usePendingManager()
+  const { pending, ready } = usePendingManager()
+  if (!ready) return null
   if (pending) return <Navigate to="/register-team" replace />
   return (
     <ProtectedRoute>
@@ -49,10 +52,15 @@ function Protected({ children }) {
 }
 
 function RegisterTeamRoute() {
-  const { pending } = usePendingManager()
+  const { pending, ready } = usePendingManager()
+  if (!ready) return null
   return (
     <ProtectedRoute>
-      <RegisterTeamPage standalone={pending} />
+      {pending ? (
+        <RegisterTeamPage standalone={pending} />
+      ) : (
+        <Layout><RegisterTeamPage standalone={false} /></Layout>
+      )}
     </ProtectedRoute>
   )
 }
