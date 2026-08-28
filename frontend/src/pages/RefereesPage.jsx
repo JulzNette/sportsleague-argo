@@ -43,7 +43,7 @@ export default function RefereesPage() {
     return (
       <div className="card p-10 text-center text-gray-400">
         <i className="bi bi-lock text-2xl" />
-        <p className="mt-2 text-sm">Referees requires the <b>referee.manage</b> permission, held only by League Administrators and System Administrators.</p>
+        <p className="mt-2 text-sm">Referees requires the <b>referee.manage</b> permission, held by League Administrators, System Administrators, and Superadmins.</p>
       </div>
     )
   }
