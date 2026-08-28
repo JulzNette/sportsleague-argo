@@ -2,6 +2,8 @@
 Registration fee + payment: the registrant types a fee, it is stored, an admin
 can mark it Paid, and the admin can email the registrant (simulated in tests).
 """
+import logging
+
 from app.core.security import hash_password
 from app.models.stub import User
 
@@ -119,3 +121,18 @@ def test_email_requires_a_contact_email(client, dbsession, org, season_division_
 
     res = client.post(f"/api/v1/registrations/{reg_id}/email", headers=headers)
     assert res.status_code == 400
+
+
+def test_submitting_auto_emails_the_manager_account(caplog, client, dbsession, org, season_division_teams):
+    caplog.set_level(logging.INFO, logger="sportsleague.email")
+    _make_user(dbsession, org, "manager.ack@example.com", "Team Manager")
+    headers = _login(client, "manager.ack@example.com")
+    _, division, _ = season_division_teams
+
+    # The typed contact_email differs from the manager's account email; the
+    # auto-ack must go to the ACCOUNT email, not the typed one.
+    res = _submit(client, headers, division.id, contact_email="someone.else@example.com")
+    assert res.status_code == 201
+
+    assert any("EMAIL SIMULATED" in r.message and "manager.ack@example.com" in r.message for r in caplog.records)
+    assert any("wait for the administrator to approve" in r.message for r in caplog.records)

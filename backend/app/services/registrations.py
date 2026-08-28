@@ -13,7 +13,9 @@ from sqlalchemy.orm import Session
 
 from app.models.player import Player
 from app.models.registration import Registration, RegistrationDocument, RegistrationPlayer
+from app.models.stub import User
 from app.models.team import Team
+from app.services.email import send_registration_ack_email
 from app.services.notifications import notify_reviewers, notify_submitter
 
 
@@ -56,6 +58,17 @@ def create_registration(db: Session, *, organization_id: uuid.UUID, user_id: uui
             detail="This team already has a registration (pending or not) in this division.",
         ) from exc
     db.refresh(registration)
+
+    # Auto-email the manager (the account that submitted) an acknowledgment.
+    # Wrapped in try/except so an email hiccup never fails the registration.
+    try:
+        submitter = db.get(User, user_id)
+        manager_email = submitter.email if submitter else None
+        if manager_email:
+            send_registration_ack_email(team_name=registration.team_name, manager_email=manager_email)
+    except Exception:  # noqa: BLE001 - email is best-effort and must not block
+        pass
+
     return registration
 
 
