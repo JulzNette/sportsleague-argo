@@ -143,7 +143,7 @@ def main():
             print(f"Created organization '{ORG_NAME}' ({ORG_ID})")
 
         roles = [
-            "Viewer", "League Administrator", "Season Manager", "Team Manager",
+            "Superadmin", "Viewer", "League Administrator", "Season Manager", "Team Manager",
             "Referee", "Player", "System Administrator",
         ]
         users = {}

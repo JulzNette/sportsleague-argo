@@ -7,6 +7,7 @@ import { can } from '../lib/permissions'
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: 'bi-grid-1x2' },
+  { to: '/users', label: 'Users', icon: 'bi-people-fill', perms: ['user.view'] },
   { to: '/leagues', label: 'Leagues', icon: 'bi-diagram-3', perms: ['league.view'] },
   { to: '/seasons', label: 'Seasons', icon: 'bi-calendar-range', perms: ['season.view'] },
   { to: '/divisions', label: 'Divisions', icon: 'bi-collection', perms: ['division.view'] },

@@ -20,6 +20,7 @@ import StatisticsPage from './pages/StatisticsPage'
 import ReportsPage from './pages/ReportsPage'
 import ArchivePage from './pages/ArchivePage'
 import SettingsPage from './pages/SettingsPage'
+import UsersPage from './pages/UsersPage'
 import { endpoints } from './lib/api'
 import { useAuthStore } from './store/authStore'
 
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
           <Route path="/archive" element={<Protected><ArchivePage /></Protected>} />
           <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
+          <Route path="/users" element={<Protected><UsersPage /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

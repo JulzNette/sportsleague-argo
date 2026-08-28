@@ -142,4 +142,11 @@ export const endpoints = {
     create: (data) => api.post('/reports', data),
     viewStandings: (id) => api.get(`/reports/${id}/standings`),
   },
+  users: {
+    list: () => api.get('/users'),
+    create: (data) => api.post('/users', data),
+    update: (id, data) => api.patch(`/users/${id}`, data),
+    resetPassword: (id, data) => api.post(`/users/${id}/reset-password`, data),
+    remove: (id) => api.delete(`/users/${id}`),
+  },
 }
