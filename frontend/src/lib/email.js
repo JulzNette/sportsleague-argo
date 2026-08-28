@@ -40,7 +40,7 @@ async function sendTemplate(templateId, label, variables) {
 /** Registration received — wait for approval. */
 export function sendRegistrationAck(r) {
   return sendTemplate(T_ACK, 'registration ack', {
-    to_email: r?.to_email || r?.contact_email,
+    to_email: r?.manager_email || r?.to_email || r?.contact_email,
     team_name: r?.team_name,
     coach_name: r?.coach_name,
     registration_fee: r?.registration_fee,
@@ -51,7 +51,7 @@ export function sendRegistrationAck(r) {
 /** Registration approved. */
 export function sendRegistrationApproved(r, review_comment) {
   return sendTemplate(T_APPROVED, 'approval', {
-    to_email: r?.contact_email,
+    to_email: r?.manager_email || r?.contact_email,
     team_name: r?.team_name,
     coach_name: r?.coach_name,
     review_comment: review_comment || '',
@@ -61,7 +61,7 @@ export function sendRegistrationApproved(r, review_comment) {
 /** Payment received. */
 export function sendPaymentReceived(r) {
   return sendTemplate(T_PAYMENT, 'payment received', {
-    to_email: r?.contact_email,
+    to_email: r?.manager_email || r?.contact_email,
     team_name: r?.team_name,
     coach_name: r?.coach_name,
     registration_fee: r?.registration_fee,
@@ -72,7 +72,7 @@ export function sendPaymentReceived(r) {
 /** Payment required / fee reminder (manual "email registrant" button). */
 export function sendFeeReminder(r) {
   return sendTemplate(T_FEE, 'fee reminder', {
-    to_email: r?.contact_email,
+    to_email: r?.manager_email || r?.contact_email,
     team_name: r?.team_name,
     coach_name: r?.coach_name,
     registration_fee: r?.registration_fee,

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.deps import CurrentUser, get_db_session, require_permission
 from app.core.permissions import role_has_permission
 from app.models.registration import Registration
+from app.models.stub import User
 from app.schemas.registration import (
     PaymentUpdate, RegistrationCreate, RegistrationOut, RegistrationReview,
 )
@@ -20,6 +21,17 @@ _LOAD_OPTIONS = [
 ]
 
 
+def _fill_manager_email(db: Session, obj) -> None:
+    """Expose the submitting Team Manager's account email on the response."""
+    user = db.get(User, obj.created_by)
+    obj.manager_email = user.email if user else None
+
+
+def _fill_manager_emails(db: Session, objects) -> None:
+    for obj in objects:
+        _fill_manager_email(db, obj)
+
+
 @router.get("", response_model=list[RegistrationOut], summary="List Registrations")
 def list_registrations(
     status: str | None = None,
@@ -31,14 +43,17 @@ def list_registrations(
     registrations they submitted themselves (created_by == their own id).
     """
     if role_has_permission(user.role, "registration.review"):
-        return crud.list_scoped(
+        records = crud.list_scoped(
             db, Registration, organization_id=user.organization_id,
             status=status, options=_LOAD_OPTIONS,
         )
-    return crud.list_scoped(
-        db, Registration, organization_id=user.organization_id,
-        status=status, options=_LOAD_OPTIONS, created_by=user.id,
-    )
+    else:
+        records = crud.list_scoped(
+            db, Registration, organization_id=user.organization_id,
+            status=status, options=_LOAD_OPTIONS, created_by=user.id,
+        )
+    _fill_manager_emails(db, records)
+    return records
 
 
 @router.post("", response_model=RegistrationOut, status_code=201, summary="Submit a Registration")
@@ -47,10 +62,12 @@ def create_registration(
     db: Session = Depends(get_db_session),
     user: CurrentUser = Depends(require_permission("registration.submit")),
 ):
-    return registrations.create_registration(
+    result = registrations.create_registration(
         db, organization_id=user.organization_id, user_id=user.id,
         data=payload.model_dump(),
     )
+    _fill_manager_email(db, result)
+    return result
 
 
 @router.get("/{registration_id}", response_model=RegistrationOut, summary="Get a Registration")
@@ -59,10 +76,12 @@ def get_registration(
     db: Session = Depends(get_db_session),
     user: CurrentUser = Depends(require_permission("registration.view")),
 ):
-    return crud.get_scoped_or_404(
+    obj = crud.get_scoped_or_404(
         db, Registration, organization_id=user.organization_id,
         record_id=registration_id, options=_LOAD_OPTIONS,
     )
+    _fill_manager_email(db, obj)
+    return obj
 
 
 @router.patch("/{registration_id}/review", response_model=RegistrationOut, summary="Approve or Reject a Registration")
@@ -80,10 +99,12 @@ def review_registration(
         db, Registration, organization_id=user.organization_id,
         record_id=registration_id, options=_LOAD_OPTIONS,
     )
-    return registrations.review_registration(
+    result = registrations.review_registration(
         db, registration=obj, user_id=user.id,
         status=payload.status, review_comment=payload.review_comment,
     )
+    _fill_manager_email(db, result)
+    return result
 
 
 @router.patch("/{registration_id}/payment", response_model=RegistrationOut, summary="Mark registration fee as Paid/Pending")
@@ -98,9 +119,11 @@ def update_payment(
         db, Registration, organization_id=user.organization_id,
         record_id=registration_id, options=_LOAD_OPTIONS,
     )
-    return registrations.set_payment_status(
+    result = registrations.set_payment_status(
         db, registration=obj, user_id=user.id, payment_status=payload.payment_status,
     )
+    _fill_manager_email(db, result)
+    return result
 
 
 @router.post("/{registration_id}/email", summary="Email the registrant about their registration fee")
