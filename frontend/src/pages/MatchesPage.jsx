@@ -85,7 +85,8 @@ export default function MatchesPage() {
   })
 
   function openCreate() {
-    setForm({ ...EMPTY, season_id: seasons?.[0]?.id || '' })
+    const firstSeasonWithDivisions = seasons?.find((s) => divisions?.some((d) => d.season_id === s.id))
+    setForm({ ...EMPTY, season_id: firstSeasonWithDivisions?.id || seasons?.[0]?.id || '' })
     setError(null)
     setModal('create')
   }
