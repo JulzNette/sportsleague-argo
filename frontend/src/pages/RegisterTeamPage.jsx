@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { endpoints } from '../lib/api'
 import { buildSportMaps } from '../lib/sports'
 import { SportBadge } from '../components/SportControls'
@@ -14,7 +14,8 @@ const STEPS = ['Team & division', 'Players', 'Documents', 'Review & submit']
 const EMPTY_PLAYER = { full_name: '', jersey_number: '', position: '', date_of_birth: '', contact_phone: '' }
 const EMPTY_DOC = { player_full_name: '', document_type: '', file_name: '', notes: '' }
 
-export default function RegisterTeamPage() {
+export default function RegisterTeamPage({ standalone = false }) {
+  const qc = useQueryClient()
   const role = useAuthStore((s) => s.role)
   if (!can(role, 'registration.submit')) return <Navigate to="/registrations" replace />
 
@@ -34,7 +35,10 @@ export default function RegisterTeamPage() {
 
   const submitMut = useMutation({
     mutationFn: (data) => endpoints.registrations.create(data),
-    onSuccess: (res) => setSubmitted(res.data),
+    onSuccess: (res) => {
+      setSubmitted(res.data)
+      qc.invalidateQueries({ queryKey: ['my-registrations'] })
+    },
     onError: setError,
   })
 
@@ -123,7 +127,8 @@ export default function RegisterTeamPage() {
 
   if (submitted) {
     return (
-      <div>
+      <div className={standalone ? 'min-h-screen flex items-center justify-center bg-gray-100 px-4 py-8' : ''}>
+        <div className={standalone ? 'w-full max-w-xl' : ''}>
         <PageHead title="Register a team" subtitle="League registration workflow." />
         <div className="card max-w-xl p-8 text-center">
           <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3">
@@ -132,12 +137,23 @@ export default function RegisterTeamPage() {
           <h2 className="font-semibold text-gray-900 text-lg">{submitted.team_name} submitted</h2>
           <p className="text-sm text-gray-500 mt-1">
             Registration for <b>{divisionPath(submitted.division_id)}</b> is <b>Pending</b> review
-            by the league administrator. You can track it on the Registrations page.
+            by the league administrator. Once approved, your team and roster will be created.
           </p>
+          {standalone && (
+            <p className="text-xs text-gray-400 mt-2">
+              You now have a manager account. Track your registration and manage your team from the
+              manager portal.
+            </p>
+          )}
           <div className="flex gap-2 justify-center mt-5">
-            <Link to="/registrations" className="btn btn-primary">View registrations</Link>
+            {standalone ? (
+              <Link to="/dashboard" className="btn btn-primary">Enter manager portal<i className="bi bi-arrow-right" /></Link>
+            ) : (
+              <Link to="/registrations" className="btn btn-primary">View registrations</Link>
+            )}
             <button className="btn btn-secondary" onClick={reset}>Register another team</button>
           </div>
+        </div>
         </div>
       </div>
     )
@@ -145,20 +161,23 @@ export default function RegisterTeamPage() {
 
   if (divisions.length === 0) {
     return (
-      <div>
+      <div className={standalone ? 'min-h-screen flex items-center justify-center bg-gray-100 px-4 py-8' : ''}>
+        <div className={standalone ? 'w-full max-w-xl' : ''}>
         <PageHead title="Register a team" subtitle="League registration workflow." />
         <div className="card p-10 text-center text-gray-400">
           <i className="bi bi-inbox text-2xl" />
           <p className="mt-2 text-sm">No divisions are open for registration yet.</p>
-          <Link to="/" className="btn btn-secondary mt-4">Back to dashboard</Link>
+          <Link to={standalone ? '/dashboard' : '/'} className="btn btn-secondary mt-4">Go to dashboard</Link>
+        </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl">
-      <PageHead title="Register a team" subtitle="Apply to join a division — approval auto-creates your team and roster." />
+    <div className={standalone ? 'min-h-screen py-10 px-4' : 'max-w-3xl'}>
+    <div className={standalone ? 'max-w-3xl mx-auto' : ''}>
+      <PageHead title="Register a team" subtitle={standalone ? 'Complete your team registration to unlock your manager portal.' : 'Apply to join a division — approval auto-creates your team and roster.'} />
 
       <ol className="flex items-center gap-0 mb-5 overflow-x-auto">
         {STEPS.map((label, i) => (
@@ -361,6 +380,7 @@ export default function RegisterTeamPage() {
           <i className="bi bi-check-circle" />Submitted — {divisionPath(submitted.division_id)} • <SportBadge sport={sportOf.division(submitted.division_id)} />
         </div>
       )}
+    </div>
     </div>
   )
 }

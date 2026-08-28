@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import LandingPage from './pages/LandingPage'
@@ -20,15 +20,39 @@ import StatisticsPage from './pages/StatisticsPage'
 import ReportsPage from './pages/ReportsPage'
 import ArchivePage from './pages/ArchivePage'
 import SettingsPage from './pages/SettingsPage'
+import { endpoints } from './lib/api'
+import { useAuthStore } from './store/authStore'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 })
 
+function usePendingManager() {
+  const role = useAuthStore((s) => s.role)
+  const { data = [] } = useQuery({
+    queryKey: ['my-registrations'],
+    queryFn: () => endpoints.registrations.list().then((r) => r.data),
+    enabled: role === 'Team Manager',
+  })
+  const isManagerRole = role === 'Team Manager'
+  return { pending: isManagerRole && data.length === 0, isManagerRole }
+}
+
 function Protected({ children }) {
+  const { pending } = usePendingManager()
+  if (pending) return <Navigate to="/register-team" replace />
   return (
     <ProtectedRoute>
       <Layout>{children}</Layout>
+    </ProtectedRoute>
+  )
+}
+
+function RegisterTeamRoute() {
+  const { pending } = usePendingManager()
+  return (
+    <ProtectedRoute>
+      <RegisterTeamPage standalone={pending} />
     </ProtectedRoute>
   )
 }
@@ -48,7 +72,7 @@ export default function App() {
           <Route path="/teams" element={<Protected><TeamsPage /></Protected>} />
           <Route path="/players" element={<Protected><PlayersPage /></Protected>} />
           <Route path="/registrations" element={<Protected><RegistrationsPage /></Protected>} />
-          <Route path="/register-team" element={<Protected><RegisterTeamPage /></Protected>} />
+          <Route path="/register-team" element={<RegisterTeamRoute />} />
           <Route path="/referees" element={<Protected><RefereesPage /></Protected>} />
           <Route path="/matches" element={<Protected><MatchesPage /></Protected>} />
           <Route path="/standings" element={<Protected><StandingsPage /></Protected>} />
