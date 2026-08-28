@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const next = searchParams.get('next') || '/dashboard'
+  const next = searchParams.get('next') || '/register-team'
 
   async function handleSubmit(e) {
     e.preventDefault()

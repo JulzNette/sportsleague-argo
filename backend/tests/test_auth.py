@@ -4,14 +4,15 @@ read-only guarantee for self-created accounts.
 """
 
 
-def test_register_creates_viewer_account(client):
+def test_register_creates_team_manager_account(client):
     res = client.post("/api/v1/auth/register", json={
-        "full_name": "New Viewer", "email": "new.viewer@example.com", "password": "password123",
+        "full_name": "New Team Manager", "email": "new.manager@example.com", "password": "password123",
+        "contact_phone": "09171234567",
     })
     assert res.status_code == 201
     body = res.json()
     assert body["access_token"]
-    assert body["role"] == "Viewer"
+    assert body["role"] == "Team Manager"
 
 
 def test_register_rejects_duplicate_email(client):
@@ -68,7 +69,7 @@ def test_change_password_requires_auth(client):
     assert res.status_code == 401
 
 
-def test_viewer_cannot_write(client):
+def test_team_manager_cannot_write_admin_data(client):
     reg = client.post("/api/v1/auth/register", json={
         "full_name": "Read Only", "email": "readonly@example.com", "password": "password123",
     })

@@ -50,8 +50,9 @@ def login_for_docs(request: Request, form_data: OAuth2PasswordRequestForm = Depe
 @limiter.limit("3/minute")
 def register(request: Request, payload: RegisterRequest, db: Session = Depends(get_db)):
     """
-    Creates a read-only Viewer account. New accounts can view leagues, teams,
-    matches and standings but cannot create, edit, or delete anything.
+    Creates a Team Manager account. A newly signed-up account can register
+    their team (the "register a team" workflow); when an admin approves that
+    registration, the team is created and this user becomes its manager.
     """
     email = payload.email.lower()
     existing = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
@@ -71,7 +72,7 @@ def register(request: Request, payload: RegisterRequest, db: Session = Depends(g
         hashed_password=hash_password(payload.password),
         full_name=payload.full_name,
         contact_phone=payload.contact_phone,
-        role="Viewer",
+        role="Team Manager",
         is_active=True,
     )
     db.add(user)
