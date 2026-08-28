@@ -17,6 +17,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401 - register every table on Base.metadata
+from app.core.config import get_settings
 from app.core.rate_limit import limiter
 from app.db.base import Base
 from app.db.session import get_db
@@ -42,6 +43,22 @@ def _reset_rate_limits():
     limiter._storage.reset()
     yield
     limiter._storage.reset()
+
+
+@pytest.fixture(autouse=True)
+def _force_email_simulation(monkeypatch):
+    """Tests must never touch a real SMTP/Brevo account. Ensure the email
+    service falls back to simulation regardless of what's in the local .env."""
+    get_settings.cache_clear()
+
+    def _settings_without_email():
+        s = get_settings()
+        s.SMTP_HOST = None
+        s.BREVO_API_KEY = None
+        return s
+
+    monkeypatch.setattr("app.core.config.get_settings", _settings_without_email)
+    monkeypatch.setattr("app.services.email.get_settings", _settings_without_email)
 
 
 @pytest.fixture()

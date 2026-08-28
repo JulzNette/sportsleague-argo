@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str | None = None
     SMTP_FROM_EMAIL: str | None = None
 
+    # Brevo transactional HTTP API (works over port 443, which Render's free
+    # tier allows even though raw SMTP/587 is blocked). When BREVO_API_KEY is
+    # set, the email service prefers this over SMTP.
+    BREVO_API_KEY: str | None = None
+    BREVO_FROM_EMAIL: str | None = None
+
     # Browser origins allowed to call the API (JSON array in env), e.g.
     # CORS_ORIGINS=["https://sportsleague-frontend.vercel.app"]
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:8020"]
