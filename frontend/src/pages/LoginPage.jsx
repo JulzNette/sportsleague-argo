@@ -19,7 +19,7 @@ export default function LoginPage() {
     try {
       const res = await endpoints.login({ email, password })
       login({ access_token: res.data.access_token, role: res.data.role, email })
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       setError(err)
     } finally {

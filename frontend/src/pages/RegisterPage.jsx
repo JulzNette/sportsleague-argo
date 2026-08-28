@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { endpoints } from '../lib/api'
 import { useAuthStore } from '../store/authStore'
 import ErrorBanner from '../components/ErrorBanner'
@@ -13,6 +13,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next') || '/dashboard'
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -29,7 +31,7 @@ export default function RegisterPage() {
     try {
       const res = await endpoints.register({ full_name: fullName, email, password })
       login({ access_token: res.data.access_token, role: res.data.role, email })
-      navigate('/')
+      navigate(next)
     } catch (err) {
       setError(err)
     } finally {

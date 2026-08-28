@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --ink: #0B0E14;
+  --court: #12151F;
+  --panel: #171B27;
+  --line: #2A3040;
+  --chalk: #F3EFE6;
+  --chalk-dim: #A9AEBC;
+  --orange: #FF6A2B;
+  --orange-dim: #7A3A22;
+  --volt: #D6FF3F;
+}
+
 body {
   @apply bg-gray-100 text-gray-900;
   font-family: 'Inter', system-ui, sans-serif;

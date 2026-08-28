@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore'
 import { can } from '../lib/permissions'
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: 'bi-grid-1x2' },
+  { to: '/dashboard', label: 'Dashboard', icon: 'bi-grid-1x2' },
   { to: '/leagues', label: 'Leagues', icon: 'bi-diagram-3', perms: ['league.view'] },
   { to: '/seasons', label: 'Seasons', icon: 'bi-calendar-range', perms: ['season.view'] },
   { to: '/divisions', label: 'Divisions', icon: 'bi-collection', perms: ['division.view'] },
@@ -93,7 +93,7 @@ export default function Layout({ children }) {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
+              end={item.to === '/dashboard'}
               onClick={closeSidebar}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium ${
