@@ -11,6 +11,7 @@ from fastapi import HTTPException, status as http_status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.models.coach import Coach
 from app.models.player import Player
 from app.models.registration import Registration, RegistrationDocument, RegistrationPlayer
 from app.models.stub import User
@@ -127,6 +128,22 @@ def review_registration(
             for p in registration.players
         ]
         db.add(team)
+        # Materialize the team so its id exists, then auto-create the coach
+        # record from the registration's coach info (name/email/phone) - the
+        # Team Manager picks the coach when they fill in the registration form.
+        db.flush()
+        if registration.coach_name:
+            db.add(Coach(
+                organization_id=registration.organization_id,
+                created_by=user_id,
+                updated_by=user_id,
+                team_id=team.id,
+                full_name=registration.coach_name,
+                role="Head Coach",
+                email=registration.contact_email,
+                phone=registration.contact_phone,
+                status="Active",
+            ))
 
     registration.status = status
     registration.reviewed_by = user_id

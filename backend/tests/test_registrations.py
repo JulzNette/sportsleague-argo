@@ -96,6 +96,36 @@ def test_approval_creates_team_and_players(client, dbsession, org, season_divisi
     players = client.get("/api/v1/players", params={"team_id": team["id"]}, headers=headers).json()
     assert {p["full_name"] for p in players} == {"Jules Aquino", "Bea Navarro"}
 
+    coaches = client.get("/api/v1/coaches", params={"team_id": team["id"]}, headers=headers).json()
+    assert len(coaches) == 1
+    coach = coaches[0]
+    assert coach["full_name"] == "Nina Ramos"
+    assert coach["team_id"] == team["id"]
+    assert coach["email"] == "nina@example.com"
+    assert coach["phone"] == "09171234567"
+    assert coach["role"] == "Head Coach"
+
+
+def test_approval_without_coach_info_creates_no_coach(client, dbsession, org, season_division_teams):
+    _make_user(dbsession, org, "admin.nocoach@example.com", "System Administrator")
+    headers = _login(client, "admin.nocoach@example.com")
+    _, division, _ = season_division_teams
+    reg_id = _submit(
+        client, headers, division.id,
+        coach_name=None, contact_email=None, contact_phone=None,
+    ).json()["id"]
+
+    res = client.patch(
+        f"/api/v1/registrations/{reg_id}/review",
+        json={"status": "Approved", "review_comment": ""},
+        headers=headers,
+    )
+    assert res.status_code == 200
+
+    team = next(t for t in client.get("/api/v1/teams", headers=headers).json() if t["name"] == "Silver Sharks")
+    coaches = client.get("/api/v1/coaches", params={"team_id": team["id"]}, headers=headers).json()
+    assert coaches == []
+
 
 def test_rejection_does_not_create_team(client, dbsession, org, season_division_teams):
     _make_user(dbsession, org, "admin.reject@example.com", "Season Manager")

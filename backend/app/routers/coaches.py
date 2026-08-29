@@ -1,16 +1,66 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.deps import CurrentUser, get_db_session, require_permission
+from app.core.deps import CurrentUser, get_current_user, get_db_session, require_permission
+from app.core.permissions import role_has_permission
 from app.models.coach import Coach
+from app.models.registration import Registration
 from app.models.team import Team
 from app.schemas.coach import CoachCreate, CoachOut, CoachUpdate
 from app.services import crud
 
 router = APIRouter(prefix="/coaches", tags=["Coaches"])
+
+TEAM_MANAGER = "Team Manager"
+
+
+def _require_coach_access(
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Admin/manager roles manage any coach via coach.manage; a Team Manager is
+    allowed in but can only touch the coach of their own team(s) - enforced per
+    request by requiring the target team be one they registered."""
+    if role_has_permission(current_user.role, "coach.manage") or current_user.role == TEAM_MANAGER:
+        return current_user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="You do not have permission to manage coaches.",
+    )
+
+
+def _manager_team_ids(db: Session, user: CurrentUser) -> set[uuid.UUID]:
+    """Teams this Team Manager owns, derived from the approved registrations they
+    submitted (created_by == their account) - the same ownership convention the
+    registration workflow uses to scope a manager's view."""
+    if user.role != TEAM_MANAGER:
+        return None
+    ids: set[uuid.UUID] = set()
+    regs = db.query(Registration).filter(
+        Registration.organization_id == user.organization_id,
+        Registration.created_by == user.id,
+        Registration.status == "Approved",
+    ).all()
+    for reg in regs:
+        team = db.query(Team).filter(
+            Team.organization_id == user.organization_id,
+            Team.division_id == reg.division_id,
+            Team.name == reg.team_name,
+        ).first()
+        if team is not None:
+            ids.add(team.id)
+    return ids
+
+
+def _ensure_allowed(db: Session, user: CurrentUser, team_id: uuid.UUID) -> None:
+    own = _manager_team_ids(db, user)
+    if own is not None and team_id not in own:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only manage the coach for your own team.",
+        )
 
 
 def _team_names(db: Session, coach_ids):
@@ -45,7 +95,10 @@ def list_coaches(
     db: Session = Depends(get_db_session),
     user: CurrentUser = Depends(require_permission("coach.view")),
 ):
+    own = _manager_team_ids(db, user)
     coaches = crud.list_scoped(db, Coach, organization_id=user.organization_id, team_id=team_id)
+    if own is not None:
+        coaches = [c for c in coaches if c.team_id in own]
     names = _team_names(db, [c.id for c in coaches])
     return [_to_out(c, names.get(c.id, "")) for c in coaches]
 
@@ -57,6 +110,9 @@ def get_coach(
     user: CurrentUser = Depends(require_permission("coach.view")),
 ):
     coach = crud.get_scoped_or_404(db, Coach, organization_id=user.organization_id, record_id=coach_id)
+    own = _manager_team_ids(db, user)
+    if own is not None and coach.team_id not in own:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Coach not found")
     names = _team_names(db, [coach.id])
     return _to_out(coach, names.get(coach.id, ""))
 
@@ -65,8 +121,9 @@ def get_coach(
 def create_coach(
     payload: CoachCreate,
     db: Session = Depends(get_db_session),
-    user: CurrentUser = Depends(require_permission("coach.manage")),
+    user: CurrentUser = Depends(_require_coach_access),
 ):
+    _ensure_allowed(db, user, payload.team_id)
     coach = crud.create_scoped(
         db, Coach, organization_id=user.organization_id, user_id=user.id, data=payload.model_dump()
     )
@@ -79,9 +136,11 @@ def update_coach(
     coach_id: uuid.UUID,
     payload: CoachUpdate,
     db: Session = Depends(get_db_session),
-    user: CurrentUser = Depends(require_permission("coach.manage")),
+    user: CurrentUser = Depends(_require_coach_access),
 ):
     obj = crud.get_scoped_or_404(db, Coach, organization_id=user.organization_id, record_id=coach_id)
+    target_team = payload.team_id if payload.team_id is not None else obj.team_id
+    _ensure_allowed(db, user, target_team)
     update = crud.update_scoped(db, obj, user_id=user.id, data=payload.model_dump(exclude_unset=True))
     return _to_out(update)
 
@@ -90,7 +149,8 @@ def update_coach(
 def delete_coach(
     coach_id: uuid.UUID,
     db: Session = Depends(get_db_session),
-    user: CurrentUser = Depends(require_permission("coach.manage")),
+    user: CurrentUser = Depends(_require_coach_access),
 ):
     obj = crud.get_scoped_or_404(db, Coach, organization_id=user.organization_id, record_id=coach_id)
+    _ensure_allowed(db, user, obj.team_id)
     crud.delete_scoped(db, obj)
