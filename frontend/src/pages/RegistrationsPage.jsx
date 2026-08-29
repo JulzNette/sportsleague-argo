@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { endpoints } from '../lib/api'
-import { sendRegistrationApproved, sendPaymentReceived, sendFeeReminder } from '../lib/email'
+import { sendFeeReminder } from '../lib/email'
 import { can } from '../lib/permissions'
 import { useAuthStore } from '../store/authStore'
 import { buildSportMaps } from '../lib/sports'
@@ -45,10 +45,6 @@ export default function RegistrationsPage() {
       qc.invalidateQueries({ queryKey: ['registrations'] })
       qc.invalidateQueries({ queryKey: ['teams'] })
       qc.invalidateQueries({ queryKey: ['players'] })
-      // Email the registrant when their registration is approved.
-      if (res.data?.status === 'Approved') {
-        sendRegistrationApproved(res.data, comment)
-      }
     },
     onError: setError,
   })
@@ -58,10 +54,6 @@ export default function RegistrationsPage() {
     onSuccess: (res) => {
       setSelected(res.data)
       qc.invalidateQueries({ queryKey: ['registrations'] })
-      // Email the registrant when their fee has been received.
-      if (res.data?.payment_status === 'Paid') {
-        sendPaymentReceived(res.data)
-      }
     },
     onError: setError,
   })
