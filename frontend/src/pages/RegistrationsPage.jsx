@@ -260,9 +260,9 @@ export default function RegistrationsPage() {
                   </button>
                 </div>
               </div>
-              {selected.contact_email
-                ? <p className="text-xs text-gray-400 mt-2">Emails go to <b>{selected.contact_email}</b>.</p>
-                : <p className="text-xs text-rose-500 mt-2">No contact email on this registration.</p>}
+              {selected.manager_email
+                ? <p className="text-xs text-gray-400 mt-2">Emails go to the Team Manager: <b>{selected.manager_email}</b>.</p>
+                : <p className="text-xs text-rose-500 mt-2">No manager email on this registration.</p>}
             </div>
           )}
 
