@@ -172,4 +172,7 @@ export const endpoints = {
     clearDivisionFee: (divisionId) => api.delete(`/settings/division-fees/${divisionId}`),
     setFoulLimit: (data) => api.put('/settings/foul-limit', data),
   },
+  superadmin: {
+    summary: () => api.get('/superadmin/summary'),
+  },
 }

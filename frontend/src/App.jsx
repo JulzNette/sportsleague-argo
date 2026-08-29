@@ -26,8 +26,10 @@ import ArchivePage from './pages/ArchivePage'
 import SettingsPage from './pages/SettingsPage'
 import AdminSettingsPage from './pages/AdminSettingsPage'
 import UsersPage from './pages/UsersPage'
+import SuperadminPage from './pages/SuperadminPage'
 import { endpoints } from './lib/api'
 import { useAuthStore } from './store/authStore'
+import { isAdminRole } from './lib/permissions'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -71,6 +73,18 @@ function RegisterTeamRoute() {
   )
 }
 
+function SuperadminRoute() {
+  const role = useAuthStore((s) => s.role)
+  if (!isAdminRole(role)) {
+    return <Navigate to="/dashboard" replace />
+  }
+  return (
+    <ProtectedRoute>
+      <Layout><SuperadminPage /></Layout>
+    </ProtectedRoute>
+  )
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -100,6 +114,7 @@ export default function App() {
           <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
           <Route path="/admin-settings" element={<Protected><AdminSettingsPage /></Protected>} />
           <Route path="/users" element={<Protected><UsersPage /></Protected>} />
+          <Route path="/superadmin" element={<SuperadminRoute />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
