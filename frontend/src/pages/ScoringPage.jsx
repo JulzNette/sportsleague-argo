@@ -25,6 +25,7 @@ export default function ScoringPage() {
   const [seconds, setSeconds] = useState(0)
   const [running, setRunning] = useState(false)
   const [editTime, setEditTime] = useState(false)
+  const [editText, setEditText] = useState({ period: '1', minutes: '00', seconds: '00' })
   const validMatches = matches.filter((m) => !['Completed', 'Cancelled', 'Forfeited'].includes(m.status))
 
   const match = matches.find((m) => m.id === matchId)
@@ -112,26 +113,36 @@ export default function ScoringPage() {
     if (Number.isNaN(v)) return min
     return Math.min(max, Math.max(min, v))
   }
-  function onMinutesChange(raw) {
-    const v = Math.floor(Number(raw))
-    if (raw === '' || Number.isNaN(v)) return
-    const next = clamp(v, 0, 59)
-    setMinutes(next)
-    if (matchId) emit({ minutes: next })
+  // Editable clock fields: while editing we keep the raw typed string so the
+  // user can backspace freely; we only parse/commit when a valid number is entered
+  // or when they finish editing.
+  function typeField(key, raw) {
+    if (!/^\d*$/.test(raw)) return
+    setEditText((t) => ({ ...t, [key]: raw }))
+    if (raw === '' || Number.isNaN(Number(raw))) return
+    if (key === 'period') {
+      const next = clamp(Math.floor(Number(raw)), 1, 99)
+      setPeriod(next)
+      if (matchId) emit({ period: next })
+    } else {
+      const next = clamp(Math.floor(Number(raw)), 0, 59)
+      if (key === 'minutes') { setMinutes(next); if (matchId) emit({ minutes: next }) }
+      else { setSeconds(next); if (matchId) emit({ seconds: next }) }
+    }
   }
-  function onSecondsChange(raw) {
-    const v = Math.floor(Number(raw))
-    if (raw === '' || Number.isNaN(v)) return
-    const next = clamp(v, 0, 59)
-    setSeconds(next)
-    if (matchId) emit({ seconds: next })
+
+  function commitEdit() {
+    const p = clamp(editText.period === '' ? period : Math.floor(Number(editText.period)), 1, 99)
+    const m = clamp(editText.minutes === '' ? minutes : Math.floor(Number(editText.minutes)), 0, 59)
+    const s = clamp(editText.seconds === '' ? seconds : Math.floor(Number(editText.seconds)), 0, 59)
+    setPeriod(p); setMinutes(m); setSeconds(s)
+    if (matchId) emit({ period: p, minutes: m, seconds: s })
+    setEditTime(false)
   }
-  function onPeriodChange(raw) {
-    const v = Math.floor(Number(raw))
-    if (raw === '' || Number.isNaN(v)) return
-    const next = clamp(v, 1, 99)
-    setPeriod(next)
-    if (matchId) emit({ period: next })
+
+  function openEdit() {
+    setEditText({ period: String(period), minutes: pad(minutes), seconds: pad(seconds) })
+    setEditTime(true)
   }
 
   const fmt = `${pad(minutes)}:${pad(seconds)}`
@@ -169,7 +180,7 @@ export default function ScoringPage() {
                 {editTime ? (
                   <span
                     className="bg-slate-700 text-blue-300 px-2 py-1 rounded-full flex items-center gap-1 font-mono tabular-nums"
-                    onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setEditTime(false) }}
+                    onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) commitEdit() }}
                   >
                     <span className="flex items-center gap-0.5">
                       Q
@@ -177,39 +188,42 @@ export default function ScoringPage() {
                         autoFocus
                         type="text"
                         inputMode="numeric"
+                        placeholder="1"
                         maxLength={2}
                         className="w-6 bg-slate-800 text-center text-blue-300 rounded outline-none"
-                        value={period}
-                        onChange={(e) => onPeriodChange(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                        value={editText.period}
+                        onChange={(e) => typeField('period', e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') commitEdit() }}
                       />
                     </span>
                     <span>·</span>
                     <input
                       type="text"
                       inputMode="numeric"
+                      placeholder="00"
                       maxLength={2}
                       className="w-7 bg-slate-800 text-center text-blue-300 rounded outline-none"
-                      value={pad(minutes)}
-                      onChange={(e) => onMinutesChange(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                      value={editText.minutes}
+                      onChange={(e) => typeField('minutes', e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') commitEdit() }}
                     />
                     <span>:</span>
                     <input
                       type="text"
                       inputMode="numeric"
+                      placeholder="00"
                       maxLength={2}
                       className="w-7 bg-slate-800 text-center text-blue-300 rounded outline-none"
-                      value={pad(seconds)}
-                      onChange={(e) => onSecondsChange(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                      value={editText.seconds}
+                      onChange={(e) => typeField('seconds', e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') commitEdit() }}
                     />
                   </span>
                 ) : (
                   <span
                     title="Double-click to edit the clock"
                     className="bg-slate-700 text-blue-300 px-3 py-1 rounded-full cursor-pointer select-none"
-                    onDoubleClick={() => setEditTime(true)}
+                    onDoubleClick={openEdit}
                   >
                     Q{period} · {fmt} <span className={running ? 'text-green-400' : 'text-red-400'}>●</span>
                   </span>
