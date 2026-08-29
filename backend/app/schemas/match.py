@@ -63,3 +63,6 @@ class PublicMatchOut(BaseModel):
     status: str
     home_score: int | None = None
     away_score: int | None = None
+    period: int | None = None
+    minutes: int | None = None
+    seconds: int | None = None

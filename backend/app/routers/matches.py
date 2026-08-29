@@ -65,6 +65,9 @@ def public_schedule(db: Session = Depends(get_db_session)):
             status=m.status,
             home_score=r.home_score if r else None,
             away_score=r.away_score if r else None,
+            period=r.period if r else None,
+            minutes=r.minutes if r else None,
+            seconds=r.seconds if r else None,
         )
         for (m, home_name, away_name, division_name, season_name, r) in rows
     ]

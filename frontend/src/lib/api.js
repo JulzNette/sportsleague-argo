@@ -128,6 +128,9 @@ export const endpoints = {
     submit: (matchId, data) => api.post(`/matches/${matchId}/result`, data),
     update: (matchId, data) => api.patch(`/matches/${matchId}/result`, data),
   },
+  scoring: {
+    update: (matchId, data) => api.post(`/matches/${matchId}/score`, data),
+  },
   standings: {
     get: (seasonId, divisionId) =>
       api.get('/standings', { params: { season_id: seasonId, division_id: divisionId } }),

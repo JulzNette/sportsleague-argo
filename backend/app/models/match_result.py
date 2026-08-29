@@ -19,6 +19,10 @@ class MatchResult(OrgAuditMixin, Base):
     )
     home_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     away_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Live game-clock state used by the Scoring page and the public scoreboard.
+    period: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    seconds: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     result_type: Mapped[str] = mapped_column(String(32), nullable=False, default="Normal")
     # Normal | Draw | Forfeit
     forfeit_winner_team_id: Mapped[uuid.UUID | None] = mapped_column(

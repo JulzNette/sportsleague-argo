@@ -228,6 +228,18 @@ export default function LandingPage() {
                 <h4 style={{ fontSize: 17, fontWeight: 700 }}>
                   {m.home_team} <span style={{ color: C.dim, fontWeight: 500 }}>vs</span> {m.away_team}
                 </h4>
+                {(m.home_score != null || m.away_score != null) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
+                    <span style={{ ...MONO, color: C.blue, fontSize: 22, fontWeight: 700 }}>
+                      {m.home_score ?? 0} – {m.away_score ?? 0}
+                    </span>
+                    {(m.status === 'In Progress' && (m.minutes != null || m.seconds != null)) && (
+                      <span style={{ ...MONO, fontSize: 12, color: C.accent, border: '1px solid #E7E4DC', padding: '3px 8px', borderRadius: 100 }}>
+                        Q{m.period ?? 1} · {String(m.minutes ?? 0).padStart(2, '0')}:{String(m.seconds ?? 0).padStart(2, '0')}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: statusColor(m.status), border: '1px solid #E7E4DC', padding: '6px 12px', borderRadius: 100, whiteSpace: 'nowrap' }}>
                 {m.status}

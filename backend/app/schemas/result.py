@@ -29,7 +29,21 @@ class MatchResultOut(AuditFieldsOut):
     match_id: uuid.UUID
     home_score: int
     away_score: int
+    period: int
+    minutes: int
+    seconds: int
     result_type: str
     forfeit_winner_team_id: uuid.UUID | None
     notes: str | None
     submitted_by: uuid.UUID
+
+
+class ScoreUpdate(BaseModel):
+    """Live scoring update emitted by the Scoring page. Deltas are added to the
+    running totals; clock fields overwrite the current game-clock state.
+    """
+    home_delta: int = Field(default=0, ge=0)
+    away_delta: int = Field(default=0, ge=0)
+    period: int | None = Field(default=None, ge=1, le=99)
+    minutes: int | None = Field(default=None, ge=0, le=59)
+    seconds: int | None = Field(default=None, ge=0, le=59)

@@ -15,6 +15,7 @@ import RegistrationsPage from './pages/RegistrationsPage'
 import RegisterTeamPage from './pages/RegisterTeamPage'
 import RefereesPage from './pages/RefereesPage'
 import MatchesPage from './pages/MatchesPage'
+import ScoringPage from './pages/ScoringPage'
 import StandingsPage from './pages/StandingsPage'
 import StatisticsPage from './pages/StatisticsPage'
 import ReportsPage from './pages/ReportsPage'
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="/register-team" element={<RegisterTeamRoute />} />
           <Route path="/referees" element={<Protected><RefereesPage /></Protected>} />
           <Route path="/matches" element={<Protected><MatchesPage /></Protected>} />
+          <Route path="/scoring" element={<Protected><ScoringPage /></Protected>} />
           <Route path="/standings" element={<Protected><StandingsPage /></Protected>} />
           <Route path="/statistics" element={<Protected><StatisticsPage /></Protected>} />
           <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
