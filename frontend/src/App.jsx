@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-quer
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import LandingPage from './pages/LandingPage'
+import PricingPage from './pages/PricingPage'
+import RewardsPage from './pages/RewardsPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
@@ -21,6 +23,7 @@ import StatisticsPage from './pages/StatisticsPage'
 import ReportsPage from './pages/ReportsPage'
 import ArchivePage from './pages/ArchivePage'
 import SettingsPage from './pages/SettingsPage'
+import AdminSettingsPage from './pages/AdminSettingsPage'
 import UsersPage from './pages/UsersPage'
 import { endpoints } from './lib/api'
 import { useAuthStore } from './store/authStore'
@@ -73,6 +76,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/rewards" element={<RewardsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/dashboard" element={<Protected><DashboardPage /></Protected>} />
@@ -91,6 +96,7 @@ export default function App() {
           <Route path="/reports" element={<Protected><ReportsPage /></Protected>} />
           <Route path="/archive" element={<Protected><ArchivePage /></Protected>} />
           <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
+          <Route path="/admin-settings" element={<Protected><AdminSettingsPage /></Protected>} />
           <Route path="/users" element={<Protected><UsersPage /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

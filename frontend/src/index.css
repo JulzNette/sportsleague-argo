@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -44,9 +44,8 @@ body {
 .badge-sport-darts         { @apply bg-slate-200 text-slate-700 border-slate-300; }
 .badge-sport-other         { @apply bg-gray-100 text-gray-600 border-gray-200; }
 
-.btn {
-  @apply inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-sm font-semibold cursor-pointer border border-transparent transition;
-}
+.btn { @apply inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-sm font-semibold cursor-pointer border border-transparent transition; }
+.btn-sm { @apply h-8 px-2.5 text-xs rounded; }
 .btn-primary { @apply bg-blue-600 text-white hover:bg-blue-700; }
 .btn-secondary { @apply bg-gray-100 text-gray-900 border-gray-200 hover:bg-gray-200; }
 .btn-outline { @apply bg-white text-gray-700 border-gray-300 hover:bg-gray-50; }

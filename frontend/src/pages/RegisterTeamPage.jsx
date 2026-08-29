@@ -33,6 +33,7 @@ export default function RegisterTeamPage({ standalone = false }) {
   })
   const [error, setError] = useState(null)
   const [submitted, setSubmitted] = useState(null)
+  const [divisionFee, setDivisionFee] = useState(null)
 
   const submitMut = useMutation({
     mutationFn: (data) => endpoints.registrations.create(data),
@@ -52,6 +53,21 @@ export default function RegisterTeamPage({ standalone = false }) {
   }
 
   function update(field, value) { setForm((f) => ({ ...f, [field]: value })) }
+
+  // The registration fee is the admin-configured amount for the chosen division
+  // (source of truth), so once a division is selected we resolve + lock it in.
+  function onDivisionChange(value) {
+    update('division_id', value)
+    setForm((f) => ({ ...f, registration_fee: '' }))
+    setDivisionFee(null)
+    if (!value) return
+    endpoints.settings.publicDivisionFee(value)
+      .then((r) => {
+        setDivisionFee(r.data.registration_fee)
+        setForm((f) => ({ ...f, registration_fee: r.data.registration_fee }))
+      })
+      .catch(() => setDivisionFee(null))
+  }
   function updatePlayer(i, field, value) {
     setForm((f) => ({ ...f, players: f.players.map((p, idx) => (idx === i ? { ...p, [field]: value } : p)) }))
   }
@@ -63,8 +79,8 @@ export default function RegisterTeamPage({ standalone = false }) {
     if (step === 0) {
       if (!form.division_id) return 'Choose the division you want to join.'
       if (!form.team_name.trim()) return 'Enter a team name.'
-      if (form.registration_fee === '' || Number.isNaN(Number(form.registration_fee)) || Number(form.registration_fee) < 0) {
-        return 'Enter a valid registration fee.'
+      if (form.registration_fee === '' || divisionFee == null || Number.isNaN(Number(form.registration_fee))) {
+        return 'The registration fee for this division has not been set yet. Pick another division or contact the league administrator.'
       }
     }
     if (step === 1) {
@@ -213,7 +229,7 @@ export default function RegisterTeamPage({ standalone = false }) {
           <h3 className="font-semibold text-gray-900 mb-3">Team &amp; division</h3>
           <div className="mb-3">
             <label className="label">Division</label>
-            <select className="input" value={form.division_id} onChange={(e) => update('division_id', e.target.value)}>
+            <select className="input" value={form.division_id} onChange={(e) => onDivisionChange(e.target.value)}>
               <option value="">Select a division...</option>
               {leagues.map((league) => (
                 <optgroup key={league.id} label={league.name}>
@@ -248,9 +264,13 @@ export default function RegisterTeamPage({ standalone = false }) {
             <label className="label">Registration fee</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₱</span>
-              <input type="number" min="0" step="0.01" className="input pl-7" value={form.registration_fee} onChange={(e) => update('registration_fee', e.target.value)} />
+              <input type="number" readOnly className="input pl-7 bg-gray-50 cursor-not-allowed" value={form.registration_fee} />
             </div>
-            <p className="text-xs text-gray-400 mt-1">Enter the registration fee amount (e.g. 1 for one peso).</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {divisionFee != null
+                ? `Set by the league administrator for this division.`
+                : 'Pick a division to see the registration fee set by the league administrator.'}
+            </p>
           </div>
           <div className="mb-1">
             <label className="label">Notes</label>

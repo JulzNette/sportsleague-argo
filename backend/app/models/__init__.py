@@ -15,3 +15,4 @@ from app.models.match_result import MatchResult  # noqa: F401
 from app.models.notification import Notification  # noqa: F401
 from app.models.player_stat import PlayerGameStat  # noqa: F401
 from app.models.report import Report  # noqa: F401
+from app.models.setting import AppSetting, DivisionFee  # noqa: F401

@@ -155,4 +155,13 @@ export const endpoints = {
     resetPassword: (id, data) => api.post(`/users/${id}/reset-password`, data),
     remove: (id) => api.delete(`/users/${id}`),
   },
+  settings: {
+    public: () => api.get('/settings/public'),
+    publicDivisionFee: (divisionId) => api.get(`/settings/public/divisions/${divisionId}/fee`),
+    admin: () => api.get('/settings'),
+    setFee: (data) => api.put('/settings/fee', data),
+    setContent: (data) => api.put('/settings/content', data),
+    setDivisionFee: (data) => api.put('/settings/division-fees', data),
+    clearDivisionFee: (divisionId) => api.delete(`/settings/division-fees/${divisionId}`),
+  },
 }

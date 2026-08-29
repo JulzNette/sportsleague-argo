@@ -31,7 +31,10 @@ class RegistrationCreate(BaseModel):
     coach_name: str | None = Field(default=None, max_length=255)
     contact_email: EmailStr | None = None
     contact_phone: str | None = Field(default=None, max_length=32)
-    registration_fee: float = Field(ge=0, description="Registration fee (amount typed by the registrant)")
+    registration_fee: float | None = Field(
+        default=None, ge=0,
+        description="Deprecated: the amount is now the admin-configured fee for the chosen division. Sent value (if any) is ignored.",
+    )
     notes: str | None = None
     players: list[RegistrationPlayerIn] = Field(min_length=1)
     documents: list[RegistrationDocumentIn] = []

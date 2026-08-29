@@ -15,11 +15,25 @@ from app.models.player import Player
 from app.models.registration import Registration, RegistrationDocument, RegistrationPlayer
 from app.models.stub import User
 from app.models.team import Team
+from app.services import settings as settings_service
 from app.services.email import send_registration_ack_email
 from app.services.notifications import notify_reviewers, notify_submitter
 
 
 def create_registration(db: Session, *, organization_id: uuid.UUID, user_id: uuid.UUID, data: dict):
+    # The registration fee is always the admin-configured amount (source of
+    # truth): a per-division override if set, otherwise the org-wide default.
+    # The division row must exist for the lookup to work, so resolve it first.
+    from app.models.division import Division
+    division = db.get(Division, data["division_id"])
+    if division is None or division.organization_id != organization_id:
+        from fastapi import HTTPException, status as http_status
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail="The selected division is invalid.",
+        )
+    fee = settings_service.resolve_fee(db, organization_id=organization_id, division_id=data["division_id"])
+
     registration = Registration(
         organization_id=organization_id,
         created_by=user_id,
@@ -31,7 +45,7 @@ def create_registration(db: Session, *, organization_id: uuid.UUID, user_id: uui
         contact_phone=data.get("contact_phone"),
         notes=data.get("notes"),
         status="Pending",
-        registration_fee=data.get("registration_fee"),
+        registration_fee=fee,
         payment_status="Pending",
     )
     registration.players = [

@@ -14,6 +14,9 @@ from app.routers import (
     auth, divisions, leagues, matches, match_stats, notifications, players, referees,
     registrations, reports, results, scoring, seasons, standings, stats, teams, users,
 )
+# `settings_router` alias avoids a name clash with the module-level `settings`
+# object returned by get_settings() below.
+from app.routers import settings as settings_router
 
 settings = get_settings()
 
@@ -65,6 +68,7 @@ app.include_router(match_stats.router, prefix=api)
 app.include_router(standings.router, prefix=api)
 app.include_router(stats.router, prefix=api)
 app.include_router(reports.router, prefix=api)
+app.include_router(settings_router.router, prefix=api)
 app.include_router(users.router, prefix=api)
 
 

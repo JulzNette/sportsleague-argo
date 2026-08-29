@@ -105,6 +105,22 @@ def org(dbsession):
     return org
 
 
+@pytest.fixture(autouse=True)
+def _default_registration_fee(dbsession, org, request):
+    """Give every registering test a configured admin fee (source of truth) so
+    submitting a registration succeeds. Opt out with @pytest.mark.no_default_fee."""
+    if "no_default_fee" in request.keywords:
+        yield
+        return
+    from app.models.setting import AppSetting
+    dbsession.add(AppSetting(
+        organization_id=org.id, created_by=org.id, updated_by=org.id,
+        key="registration_fee", value={"amount": 100.0},
+    ))
+    dbsession.commit()
+    yield
+
+
 @pytest.fixture()
 def season_division_teams(dbsession, org):
     """One season with one division and four teams: Team A/B/C/D.

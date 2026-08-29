@@ -21,6 +21,7 @@ const NAV = [
   { to: '/referees', label: 'Referees', icon: 'bi-flag', perms: ['referee.manage'] },
   { to: '/reports', label: 'Reports', icon: 'bi-file-earmark-text', perms: ['report.view'] },
   { to: '/archive', label: 'Archive', icon: 'bi-archive', perms: ['league.update', 'team.delete'] },
+  { to: '/admin-settings', label: 'Admin Settings', icon: 'bi-gear', perms: ['settings.manage'] },
 ]
 
 export default function Layout({ children }) {

@@ -125,6 +125,8 @@ export default function LandingPage() {
           {[['#about', 'About'], ['#divisions', 'Divisions'], ['#schedule', 'Schedule'], ['#venue', 'Venue']].map(([href, label]) => (
             <a key={href} href={href} style={{ textDecoration: 'none', color: C.dim }}>{label}</a>
           ))}
+          <Link to="/pricing" style={{ textDecoration: 'none', color: C.dim }}>Pricing</Link>
+          <Link to="/rewards" style={{ textDecoration: 'none', color: C.dim }}>Rewards</Link>
         </nav>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Link to="/login" style={{ textDecoration: 'none', color: C.dim, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Sign In</Link>
