@@ -41,6 +41,11 @@ export default function SeasonsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['seasons'] }); setModal(null) },
     onError: setError,
   })
+  const archiveMut = useMutation({
+    mutationFn: (id) => endpoints.seasons.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['seasons'] }),
+    onError: setError,
+  })
 
   function openCreate() { setForm({ ...EMPTY, league_id: leagues?.[0]?.id || '' }); setError(null); setModal('create') }
   function openEdit(season) { setForm(season); setError(null); setModal(season) }
@@ -82,7 +87,10 @@ export default function SeasonsPage() {
               { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
             ]}
             rows={visibleSeasons}
-            actions={(row) => can(role, 'season.update') ? [{ label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) }] : []}
+            actions={(row) => can(role, 'season.update') ? [
+              { label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) },
+              { label: 'Archive', icon: 'bi-archive', onClick: () => { if (confirm(`Archive "${row.name}"? You can restore it later from the Archive page.`)) archiveMut.mutate(row.id) } },
+            ] : []}
             emptyLabel="No seasons yet."
           />
         </>

@@ -83,7 +83,7 @@ export default function DivisionsPage() {
             rows={visibleDivisions}
             actions={(row) => [
               ...(can(role, 'division.manage') ? [{ label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) }] : []),
-              ...(can(role, 'division.manage') ? [{ label: 'Delete', icon: 'bi-trash', onClick: () => { if (confirm(`Delete "${row.name}"?`)) deleteMut.mutate(row.id) } }] : []),
+              ...(can(role, 'division.manage') ? [{ label: 'Archive', icon: 'bi-archive', onClick: () => { if (confirm(`Archive "${row.name}"? You can restore it later from the Archive page.`)) deleteMut.mutate(row.id) } }] : []),
             ]}
             emptyLabel="No divisions yet."
           />

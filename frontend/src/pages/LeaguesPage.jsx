@@ -88,7 +88,7 @@ export default function LeaguesPage() {
             rows={visibleLeagues}
             actions={(row) => [
               ...(can(role, 'league.update') ? [{ label: 'Edit', icon: 'bi-pencil', onClick: () => openEdit(row) }] : []),
-              ...(can(role, 'league.delete') ? [{ label: 'Delete', icon: 'bi-trash', onClick: () => { if (confirm(`Delete "${row.name}"?`)) deleteMut.mutate(row.id) } }] : []),
+              ...(can(role, 'league.delete') ? [{ label: 'Archive', icon: 'bi-archive', onClick: () => { if (confirm(`Archive "${row.name}"? You can restore it later from the Archive page.`)) deleteMut.mutate(row.id) } }] : []),
             ]}
             emptyLabel="No leagues yet — create one to get started."
           />

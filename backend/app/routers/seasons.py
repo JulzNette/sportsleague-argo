@@ -2,8 +2,13 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from fastapi import Depends
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.core.deps import CurrentUser, get_db_session, require_permission
 from app.core.state_machines import SEASON_STATUS_TRANSITIONS, is_valid_transition
+from app.models.league import League
 from app.models.season import Season
 from app.schemas.season import SeasonCreate, SeasonOut, SeasonUpdate
 from app.services import crud
@@ -17,7 +22,19 @@ def list_seasons(
     db: Session = Depends(get_db_session),
     user: CurrentUser = Depends(require_permission("season.view")),
 ):
-    return crud.list_scoped(db, Season, organization_id=user.organization_id, league_id=league_id)
+    # Only show seasons whose league still exists and is not archived; orphans of a
+    # soft-deleted league are hidden so they cannot be picked in dropdowns.
+    stmt = (
+        select(Season)
+        .join(League, League.id == Season.league_id)
+        .where(Season.organization_id == user.organization_id)
+        .where(Season.deleted_at.is_(None))
+        .where(League.deleted_at.is_(None))
+    )
+    if league_id is not None:
+        stmt = stmt.where(Season.league_id == league_id)
+    stmt = stmt.order_by(Season.created_at.desc())
+    return db.scalars(stmt).all()
 
 
 @router.get("/archived", response_model=list[SeasonOut], summary="List Archived Seasons")
