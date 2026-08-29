@@ -16,9 +16,28 @@ export default function ScoringPage() {
     queryFn: () => endpoints.matches.list().then((r) => r.data),
   })
   const { data: teams = [] } = useQuery({ queryKey: ['teams'], queryFn: () => endpoints.teams.list().then((r) => r.data) })
+  const { data: players = [] } = useQuery({ queryKey: ['players'], queryFn: () => endpoints.players.list().then((r) => r.data) })
+  const { data: publicSettings = {} } = useQuery({ queryKey: ['public-settings'], queryFn: () => endpoints.settings.public().then((r) => r.data) })
+  const foulLimit = publicSettings.foul_limit ?? 5
 
   const [matchId, setMatchId] = useState('')
   const [error, setError] = useState(null)
+
+  const { data: grid = [], refetch: refetchGrid } = useQuery({
+    queryKey: ['match-stats', matchId],
+    queryFn: () => (matchId ? endpoints.playerStats.get(matchId).then((r) => r.data) : []),
+    enabled: !!matchId,
+  })
+
+  // Poll-based live updates: refresh the match list (clock/score) and this
+  // match's player grid every few seconds so the scoreboard stays current.
+  useEffect(() => {
+    const t = setInterval(() => {
+      qc.refetchQueries({ queryKey: ['matches'] })
+      if (matchId) refetchGrid()
+    }, 5000)
+    return () => clearInterval(t)
+  }, [matchId])
 
   const [period, setPeriod] = useState(1)
   const [minutes, setMinutes] = useState(0)
@@ -93,6 +112,23 @@ export default function ScoringPage() {
     if (!matchId) return
     undoMut.mutate({ id: matchId, data: { side, points } })
   }
+
+  const liveMut = useMutation({
+    mutationFn: (data) => endpoints.playerStats.live(matchId, data),
+    onSuccess: () => { refetchGrid(); qc.refetchQueries({ queryKey: ['matches'] }); setError(null) },
+    onError: setError,
+  })
+
+  function addFoul(player) {
+    if (!matchId) return
+    liveMut.mutate({ player_id: player.id, points: 0, fouls: 1 })
+  }
+  function addPlayerPoint(player) {
+    if (!matchId) return
+    liveMut.mutate({ player_id: player.id, points: 1, fouls: 0 })
+  }
+
+  const statByPlayer = Object.fromEntries(grid.map((g) => [g.player_id, g]))
 
   function toggleClock() {
     setRunning((r) => !r)
@@ -182,6 +218,7 @@ export default function ScoringPage() {
       {!match ? (
         <p className="text-sm text-gray-500">No matchable games right now. Schedule a match first.</p>
       ) : (
+        <div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Scoreboard */}
           <div className="card p-5">
@@ -285,6 +322,63 @@ export default function ScoringPage() {
             </div>
             <p className="text-xs text-gray-500">Scores save live. The final result still gets submitted from the Matches page when the game ends.</p>
           </div>
+        </div>
+
+        {/* Live player scoring grid */}
+        <div className="card p-5 mt-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-700">Live player grid</h3>
+            <span className="text-xs text-gray-500">Polling every 5s · fouls out at {foulLimit} fouls</span>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {[['home', home], ['away', away]].map(([side, team]) => (
+              <div key={side}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-semibold text-sm text-gray-900">{team?.name || (side === 'home' ? 'Home' : 'Away')}</span>
+                  <span className="text-xs text-gray-400">{players.filter((p) => p.team_id === team?.id).length} players</span>
+                </div>
+                {players.filter((p) => p.team_id === team?.id).length === 0 ? (
+                  <p className="text-sm text-gray-400">No rostered players.</p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-left text-xs uppercase text-gray-500">
+                        <th className="px-2 py-1.5">Player</th>
+                        <th className="px-2 py-1.5 text-center">Pts</th>
+                        <th className="px-2 py-1.5 text-center">FLS</th>
+                        <th className="px-2 py-1.5 text-right"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {players.filter((p) => p.team_id === team?.id).map((p) => {
+                        const st = statByPlayer[p.id]
+                        const fouls = st?.fouls ?? 0
+                        const out = fouls >= foulLimit
+                        return (
+                          <tr key={p.id} className={`border-t border-gray-100 ${out ? 'bg-rose-50' : ''}`}>
+                            <td className="px-2 py-1.5 font-medium text-gray-900">
+                              <span className="inline-flex items-center gap-1.5">
+                                {p.jersey_number ? <span className="text-gray-400 text-xs">{p.jersey_number}</span> : null}
+                                {p.full_name}
+                                {out && <span className="badge badge-danger">Fouled out</span>}
+                              </span>
+                            </td>
+                            <td className="px-2 py-1.5 text-center font-mono tabular-nums">{st?.points ?? 0}</td>
+                            <td className={`px-2 py-1.5 text-center font-mono tabular-nums ${out ? 'text-rose-600 font-bold' : ''}`}>{fouls}</td>
+                            <td className="px-2 py-1.5 text-right whitespace-nowrap">
+                              <button className="btn btn-sm btn-outline mr-1" title="+1 point" disabled={liveMut.isPending} onClick={() => addPlayerPoint(p)}>+1 Pts</button>
+                              <button className="btn btn-sm btn-danger" title="+1 foul" disabled={out || liveMut.isPending} onClick={() => addFoul(p)}>+1 Foul</button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
         </div>
       )}
     </div>

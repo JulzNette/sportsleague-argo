@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import CurrentUser, get_db_session, require_permission
 from app.schemas.setting import (
     AdminSettingsOut, ContentUpdate, DivisionFeeIn, DivisionFeeOut,
-    FeeConfigUpdate, PublicSettingsOut,
+    FeeConfigUpdate, FoulLimitUpdate, PublicSettingsOut,
 )
 from app.services import settings as settings_service
 
@@ -28,6 +28,7 @@ def public_settings(
         registration_fee=settings_service.get_default_fee(db, organization_id=org.id),
         pricing=settings_service.get_setting(db, organization_id=org.id, key=settings_service.KEY_PRICING) or [],
         rewards=settings_service.get_setting(db, organization_id=org.id, key=settings_service.KEY_REWARDS) or [],
+        foul_limit=settings_service.get_foul_limit(db, organization_id=org.id),
     )
 
 
@@ -65,6 +66,7 @@ def admin_settings(
         pricing=settings_service.get_setting(db, organization_id=org_id, key=settings_service.KEY_PRICING) or [],
         rewards=settings_service.get_setting(db, organization_id=org_id, key=settings_service.KEY_REWARDS) or [],
         division_fees=[DivisionFeeOut.model_validate(f, from_attributes=True) for f in fees],
+        foul_limit=settings_service.get_foul_limit(db, organization_id=org_id),
     )
 
 
@@ -76,6 +78,30 @@ def set_fee(
 ):
     settings_service.set_default_fee(
         db, organization_id=user.organization_id, user_id=user.id, amount=payload.amount,
+    )
+    return payload
+
+
+@router.get("/public/foul-limit", summary="Public foul limit for fouls-out")
+def public_foul_limit(
+    db: Session = Depends(get_db_session),
+):
+    """Unauthenticated: the foul threshold at which a player is 'fouled out'."""
+    org = _first_org(db)
+    return {
+        "foul_limit": settings_service.get_foul_limit(db, organization_id=org.id)
+        if org is not None else settings_service.DEFAULT_FOUL_LIMIT,
+    }
+
+
+@router.put("/foul-limit", response_model=FoulLimitUpdate, summary="Set the foul-out limit")
+def set_foul_limit(
+    payload: FoulLimitUpdate,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("settings.manage")),
+):
+    settings_service.set_foul_limit(
+        db, organization_id=user.organization_id, user_id=user.id, limit=payload.foul_limit,
     )
     return payload
 

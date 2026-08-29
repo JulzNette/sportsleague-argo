@@ -13,6 +13,7 @@ import SeasonsPage from './pages/SeasonsPage'
 import DivisionsPage from './pages/DivisionsPage'
 import TeamsPage from './pages/TeamsPage'
 import PlayersPage from './pages/PlayersPage'
+import CoachesPage from './pages/CoachesPage'
 import RegistrationsPage from './pages/RegistrationsPage'
 import RegisterTeamPage from './pages/RegisterTeamPage'
 import RefereesPage from './pages/RefereesPage'
@@ -86,6 +87,7 @@ export default function App() {
           <Route path="/divisions" element={<Protected><DivisionsPage /></Protected>} />
           <Route path="/teams" element={<Protected><TeamsPage /></Protected>} />
           <Route path="/players" element={<Protected><PlayersPage /></Protected>} />
+          <Route path="/coaches" element={<Protected><CoachesPage /></Protected>} />
           <Route path="/registrations" element={<Protected><RegistrationsPage /></Protected>} />
           <Route path="/register-team" element={<RegisterTeamRoute />} />
           <Route path="/referees" element={<Protected><RefereesPage /></Protected>} />

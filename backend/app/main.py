@@ -11,7 +11,7 @@ from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.rate_limit import limiter
 from app.routers import (
-    auth, divisions, leagues, matches, match_stats, notifications, players, referees,
+    auth, coaches, divisions, leagues, matches, match_stats, notifications, players, referees,
     registrations, reports, results, scoring, seasons, standings, stats, teams, users,
 )
 # `settings_router` alias avoids a name clash with the module-level `settings`
@@ -58,6 +58,7 @@ app.include_router(seasons.router, prefix=api)
 app.include_router(divisions.router, prefix=api)
 app.include_router(teams.router, prefix=api)
 app.include_router(players.router, prefix=api)
+app.include_router(coaches.router, prefix=api)
 app.include_router(registrations.router, prefix=api)
 app.include_router(notifications.router, prefix=api)
 app.include_router(referees.router, prefix=api)

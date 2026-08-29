@@ -46,6 +46,8 @@ PERMISSIONS: dict[str, list[str]] = {
     "player.create": ["League Administrator", "Season Manager", "Team Manager", *_ADMIN_ROLES],
     "player.update": ["League Administrator", "Season Manager", "Team Manager", *_ADMIN_ROLES],
     "player.delete": ["League Administrator", *_ADMIN_ROLES],
+    "coach.view": _ALL_ROLES,
+    "coach.manage": ["League Administrator", "Season Manager", *_ADMIN_ROLES],
     "match.view": _ALL_ROLES,
     "match.schedule": ["League Administrator", "Season Manager", *_ADMIN_ROLES],
     "match.update": ["League Administrator", "Season Manager", *_ADMIN_ROLES],

@@ -50,6 +50,10 @@ export default function AdminSettingsPage() {
   useEffect(() => { setPricing(Array.isArray(s.pricing) ? s.pricing : []) }, [s.pricing])
   useEffect(() => { setRewards(Array.isArray(s.rewards) ? s.rewards : []) }, [s.rewards])
 
+  // Foul-out limit used by the live scoring grid.
+  const [foulLimit, setFoulLimit] = useState(5)
+  useEffect(() => { if (s.foul_limit != null) setFoulLimit(s.foul_limit) }, [s.foul_limit])
+
   const flash = (msg) => { setNotice(msg); setTimeout(() => setNotice(null), 3500) }
 
   const feeMut = useMutation({
@@ -70,6 +74,11 @@ export default function AdminSettingsPage() {
   const clearFeeMut = useMutation({
     mutationFn: (divisionId) => endpoints.settings.clearDivisionFee(divisionId),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-settings'] }); flash('Division override cleared') },
+    onError: setError,
+  })
+  const foulLimitMut = useMutation({
+    mutationFn: (data) => endpoints.settings.setFoulLimit(data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-settings'] }); flash('Foul limit saved') },
     onError: setError,
   })
 
@@ -98,6 +107,23 @@ export default function AdminSettingsPage() {
             {feeMut.isPending ? 'Saving...' : 'Save fee'}
           </button>
           <span className={`badge badge-${s.configured_fee ? 'success' : 'neutral'}`}>{s.configured_fee ? 'Configured' : 'Not set'}</span>
+        </div>
+      </div>
+
+      {/* ===== Foul-out limit ===== */}
+      <div className="card p-4 mb-4">
+        <h3 className="text-base font-semibold mb-1">Foul-out limit</h3>
+        <p className="text-sm text-gray-500 mb-3">The live scoring grid flags a player as "fouled out" when their fouls reach this number.</p>
+        <div className="flex gap-3 items-end flex-wrap">
+          <div>
+            <label className="text-xs font-medium text-gray-600 block mb-1">Fouls</label>
+            <input className="input" style={{ width: 120 }} type="number" min="1" max="20"
+              value={foulLimit} onChange={(e) => setFoulLimit(e.target.value === '' ? '' : Number(e.target.value))} />
+          </div>
+          <button className="btn btn-primary" disabled={foulLimitMut.isPending || foulLimit === ''}
+            onClick={() => foulLimitMut.mutate({ foul_limit: Number(foulLimit) })}>
+            {foulLimitMut.isPending ? 'Saving...' : 'Save limit'}
+          </button>
         </div>
       </div>
 

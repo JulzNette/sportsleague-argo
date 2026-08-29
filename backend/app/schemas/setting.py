@@ -15,6 +15,10 @@ class FeeConfigUpdate(BaseModel):
     amount: float | None = Field(default=None, ge=0, description="Set to null/omit to unset the default fee")
 
 
+class FoulLimitUpdate(BaseModel):
+    foul_limit: int = Field(ge=1, le=20)
+
+
 class ContentUpdate(BaseModel):
     key: str = Field(description="pricing_content or rewards_content")
     items: list[dict] = []
@@ -36,6 +40,7 @@ class PublicSettingsOut(BaseModel):
     registration_fee: float | None = None
     pricing: list[dict] = []
     rewards: list[dict] = []
+    foul_limit: int = 5
 
 
 class AdminSettingsOut(PublicSettingsOut):

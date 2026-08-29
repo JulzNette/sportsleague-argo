@@ -8,6 +8,7 @@ from app.models.season import Season  # noqa: F401
 from app.models.division import Division  # noqa: F401
 from app.models.team import Team  # noqa: F401
 from app.models.player import Player  # noqa: F401
+from app.models.coach import Coach  # noqa: F401
 from app.models.registration import Registration, RegistrationPlayer, RegistrationDocument  # noqa: F401
 from app.models.referee import Referee  # noqa: F401
 from app.models.match import Match  # noqa: F401

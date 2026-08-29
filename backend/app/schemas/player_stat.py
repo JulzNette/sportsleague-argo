@@ -24,6 +24,27 @@ class PlayerStatOut(PlayerStatLine):
     team_name: str
 
 
+class LiveStatUpdateIn(BaseModel):
+    """Live scoring grid update: add points and/or a foul to one player for a
+    match that is underway. Deltas so repeated button taps accumulate."""
+    player_id: uuid.UUID
+    points: int = Field(default=0, ge=0, le=100)
+    fouls: int = Field(default=0, ge=0, le=100)
+
+
+class FoulLimitIn(BaseModel):
+    """Per-league foul limit for 'fouls out' (defaults to 5). Stored so the
+    same limit is used across all matches in the org unless overridden."""
+    foul_limit: int = Field(default=5, ge=1, le=20)
+
+
+class LiveStatOut(PlayerStatOut):
+    """PlayerStatOut plus live-scoring extras: whether this player has fouled
+    out (fouls >= foul_limit) and the current foul limit."""
+    fouls_out: bool
+    foul_limit: int
+
+
 class PlayerAggregateOut(BaseModel):
     """Aggregated per-player totals across completed matches (computed live)."""
     rank: int

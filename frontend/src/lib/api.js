@@ -87,6 +87,12 @@ export const endpoints = {
     restore: (id) => api.post(`/players/${id}/restore`),
     purge: (id) => api.delete(`/players/${id}/purge`),
   },
+  coaches: {
+    list: (params) => api.get('/coaches', { params }),
+    create: (data) => api.post('/coaches', data),
+    update: (id, data) => api.patch(`/coaches/${id}`, data),
+    remove: (id) => api.delete(`/coaches/${id}`),
+  },
   registrations: {
     list: (params) => api.get('/registrations', { params }),
     get: (id) => api.get(`/registrations/${id}`),
@@ -142,6 +148,7 @@ export const endpoints = {
   playerStats: {
     get: (matchId) => api.get(`/matches/${matchId}/stats`),
     submit: (matchId, data) => api.post(`/matches/${matchId}/stats`, data),
+    live: (matchId, data) => api.post(`/matches/${matchId}/stats/live`, data),
   },
   reports: {
     list: () => api.get('/reports'),
@@ -163,5 +170,6 @@ export const endpoints = {
     setContent: (data) => api.put('/settings/content', data),
     setDivisionFee: (data) => api.put('/settings/division-fees', data),
     clearDivisionFee: (divisionId) => api.delete(`/settings/division-fees/${divisionId}`),
+    setFoulLimit: (data) => api.put('/settings/foul-limit', data),
   },
 }

@@ -16,6 +16,9 @@ from app.models.setting import AppSetting, DivisionFee
 KEY_FEE = "registration_fee"
 KEY_PRICING = "pricing_content"
 KEY_REWARDS = "rewards_content"
+KEY_FOUL_LIMIT = "foul_limit"
+
+DEFAULT_FOUL_LIMIT = 5
 
 # Optional keys that start empty; absent = not configured yet.
 _OPTIONAL_KEYS = {KEY_PRICING, KEY_REWARDS}
@@ -41,6 +44,19 @@ def get_default_fee(db: Session, *, organization_id: uuid.UUID) -> float | None:
     if not value:
         return None
     return _scalar(value.get("amount"))
+
+
+def get_foul_limit(db: Session, *, organization_id: uuid.UUID) -> int:
+    """Foul limit before a player is 'fouled out'. Sport-agnostic default 5."""
+    value = get_setting(db, organization_id=organization_id, key=KEY_FOUL_LIMIT)
+    if not value or isinstance(value, dict) and value.get("limit") is None:
+        return DEFAULT_FOUL_LIMIT
+    return int(value.get("limit", DEFAULT_FOUL_LIMIT))
+
+
+def set_foul_limit(db: Session, *, organization_id: uuid.UUID, user_id: uuid.UUID, limit: int) -> int:
+    _upsert(db, organization_id=organization_id, user_id=user_id, key=KEY_FOUL_LIMIT, value={"limit": int(limit)})
+    return int(limit)
 
 
 def get_division_fee(

@@ -13,6 +13,7 @@ const NAV = [
   { to: '/divisions', label: 'Divisions', icon: 'bi-collection', perms: ['division.view'] },
   { to: '/teams', label: 'Teams', icon: 'bi-people', perms: ['team.view'] },
   { to: '/players', label: 'Players', icon: 'bi-person-badge', perms: ['player.view'] },
+  { to: '/coaches', label: 'Coaches', icon: 'bi-person-video3', perms: ['coach.view'] },
   { to: '/registrations', label: 'Registrations', icon: 'bi-clipboard-check', perms: ['registration.submit'] },
   { to: '/matches', label: 'Matches', icon: 'bi-controller', perms: ['match.view'] },
   { to: '/scoring', label: 'Scoring', icon: 'bi-plus-square', perms: ['result.update'] },

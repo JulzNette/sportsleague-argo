@@ -41,6 +41,8 @@ export const PERMISSIONS = {
   'player.create': ['League Administrator', 'Season Manager', 'Team Manager', ...ADMIN],
   'player.update': ['League Administrator', 'Season Manager', 'Team Manager', ...ADMIN],
   'player.delete': ['League Administrator', ...ADMIN],
+  'coach.view': ALL,
+  'coach.manage': ['League Administrator', 'Season Manager', ...ADMIN],
   'match.view': ALL,
   'match.schedule': ['League Administrator', 'Season Manager', ...ADMIN],
   'match.update': ['League Administrator', 'Season Manager', ...ADMIN],
