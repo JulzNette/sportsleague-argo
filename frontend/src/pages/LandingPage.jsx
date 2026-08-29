@@ -102,6 +102,16 @@ export default function LandingPage() {
 
   return (
     <div style={{ background: C.ink, color: C.chalk, fontFamily: "'Work Sans', sans-serif", overflowX: 'hidden' }}>
+      <style>{`
+        @media (max-width: 767px) {
+          .lp-nav { display: none !important; }
+          .lp-sched {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+            align-items: start !important;
+          }
+        }
+      `}</style>
       {/* NAV */}
       <header style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px clamp(20px,5vw,64px)', background: 'rgba(255,255,255,0.86)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #E7E4DC' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -111,7 +121,7 @@ export default function LandingPage() {
           </div>
           <span style={{ fontFamily: "'Anton',sans-serif", letterSpacing: '0.04em', fontSize: 14, textTransform: 'uppercase' }}>Moonwalk Hardcourt</span>
         </div>
-        <nav style={{ display: 'flex', gap: 'clamp(16px,3vw,34px)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+        <nav className="lp-nav" style={{ display: 'flex', gap: 'clamp(16px,3vw,34px)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
           {[['#about', 'About'], ['#divisions', 'Divisions'], ['#schedule', 'Schedule'], ['#venue', 'Venue']].map(([href, label]) => (
             <a key={href} href={href} style={{ textDecoration: 'none', color: C.dim }}>{label}</a>
           ))}
@@ -145,7 +155,7 @@ export default function LandingPage() {
 
         {/* SCOREBOARD */}
         <div style={{ position: 'relative', zIndex: 2, margin: 'clamp(40px,7vw,70px) 0 0' }}>
-          <div style={{ background: C.panel, border: '1px solid #E7E4DC', borderRadius: 6, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', overflow: 'hidden' }}>
+          <div style={{ background: C.panel, border: '1px solid #E7E4DC', borderRadius: 6, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px,1fr))', overflow: 'hidden' }}>
             <div style={{ padding: '22px clamp(14px,2vw,28px)', borderRight: '1px solid #E7E4DC' }}>
               <div style={{ fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: C.dim, marginBottom: 10, fontWeight: 600 }}>Tip-off</div>
               <div style={{ ...MONO, fontSize: 'clamp(20px,3vw,32px)', color: C.blue }}>Sep 19, 2026</div>
@@ -170,7 +180,7 @@ export default function LandingPage() {
       <section id="about" style={SECT}>
         <div style={KICKER}>The Event<span style={{ flex: 1, height: 1, background: '#E7E4DC' }} /></div>
         <h2 style={HEAD}>Built by the barangay, for the barangay.</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 'clamp(40px,6vw,80px)', marginTop: 56, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 'clamp(40px,6vw,80px)', marginTop: 56, alignItems: 'start' }}>
           <div>
             <p style={{ color: C.dim, fontSize: 16, lineHeight: 1.8, marginBottom: 18 }}><strong style={{ color: C.chalk }}>Moonwalk Hardcourt Showdown</strong> is Moonwalk's annual community basketball tournament, played entirely on the barangay covered court. It's where sitio teams, out-of-town alumni, and weekend warriors settle the year's biggest question: whose block runs it best.</p>
             <p style={{ color: C.dim, fontSize: 16, lineHeight: 1.8, marginBottom: 18 }}>Every game is played straight-up, no shortcuts &mdash; single-elimination brackets, real refs, and a scoreboard the whole street can see. Expect loud benches, longer overtimes than you'd like, and a trophy presentation that shuts the street down for an hour.</p>
@@ -191,7 +201,7 @@ export default function LandingPage() {
         <div style={KICKER}>Categories<span style={{ flex: 1, height: 1, background: '#E7E4DC' }} /></div>
         <h2 style={HEAD}>Pick your bracket.</h2>
         <p style={{ maxWidth: 600, color: C.dim, fontSize: 17, lineHeight: 1.7 }}>Four divisions, one covered court, every skill level welcome. Register under the bracket that fits your squad.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, background: '#E7E4DC', border: '1px solid #E7E4DC', borderRadius: 4, overflow: 'hidden', marginTop: 56 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px,1fr))', gap: 1, background: '#E7E4DC', border: '1px solid #E7E4DC', borderRadius: 4, overflow: 'hidden', marginTop: 56 }}>
           {[
             { num: '01', title: "Open Men's", desc: "No age cap, full-speed play. The tournament's marquee division and usually the loudest crowd." },
             { num: '02', title: "Women's Division", desc: "Open to all barangay women's squads. Fastest-growing bracket the past two seasons running." },
@@ -219,7 +229,7 @@ export default function LandingPage() {
             </div>
           )}
           {schedule.map((m, i) => (
-            <div key={m.id || i} style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 24, alignItems: 'center', padding: '22px 0', borderBottom: '1px solid #E7E4DC' }}>
+            <div key={m.id || i} className="lp-sched" style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 24, alignItems: 'center', padding: '22px 0', borderBottom: '1px solid #E7E4DC' }}>
               <div>
                 <span style={{ ...MONO, color: C.accent, fontSize: 14, display: 'block' }}>{fmtDate(m.scheduled_date)}</span>
                 {m.scheduled_time && <span style={{ ...MONO, color: C.blue, fontSize: 12 }}>{fmtTime(m.scheduled_time)}</span>}
@@ -253,7 +263,7 @@ export default function LandingPage() {
       <section id="venue" style={SECT}>
         <div style={KICKER}>Venue<span style={{ flex: 1, height: 1, background: '#E7E4DC' }} /></div>
         <h2 style={HEAD}>Home court, home crowd.</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(30px,5vw,60px)', marginTop: 50, alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px,1fr))', gap: 'clamp(30px,5vw,60px)', marginTop: 50, alignItems: 'center' }}>
           <div style={{ border: '1px solid #E7E4DC', borderRadius: 6, padding: 36, background: 'linear-gradient(160deg, #FFFFFF, #FBFAF7)' }}>
             <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 10 }}>Moonwalk Covered Court</div>
             <div style={{ color: C.dim, fontSize: 14, lineHeight: 1.6, marginBottom: 26 }}>Barangay Moonwalk, Para&ntilde;aque City — the same court that's hosted the showdown since day one. Bleacher seating, full lighting for night games, and standing room along both baselines.</div>

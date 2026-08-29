@@ -74,9 +74,9 @@ export default function ScoringPage() {
       data: {
         home_delta: delta.home_delta || 0,
         away_delta: delta.away_delta || 0,
-        period,
-        minutes,
-        seconds,
+        period: delta.period != null ? delta.period : period,
+        minutes: delta.minutes != null ? delta.minutes : minutes,
+        seconds: delta.seconds != null ? delta.seconds : seconds,
       },
     })
   }
@@ -95,6 +95,35 @@ export default function ScoringPage() {
     const next = Math.max(1, period + dir)
     setPeriod(next)
     if (matchId) emit({ period: next })
+  }
+
+  function stepMinutes(dir) {
+    const next = clamp(minutes + dir, 0, 59)
+    setMinutes(next)
+    if (dir && matchId) emit({ minutes: next })
+  }
+  function stepSeconds(dir) {
+    const next = dir === 0 ? seconds : (seconds + dir + 60) % 60
+    setSeconds(next)
+    if (dir && matchId) emit({ seconds: next })
+  }
+  function clamp(v, min, max) {
+    if (Number.isNaN(v)) return min
+    return Math.min(max, Math.max(min, v))
+  }
+  function onMinutesChange(raw) {
+    const v = Math.floor(Number(raw))
+    if (raw === '' || Number.isNaN(v)) return
+    const next = clamp(v, 0, 59)
+    setMinutes(next)
+    if (matchId) emit({ minutes: next })
+  }
+  function onSecondsChange(raw) {
+    const v = Math.floor(Number(raw))
+    if (raw === '' || Number.isNaN(v)) return
+    const next = clamp(v, 0, 59)
+    setSeconds(next)
+    if (matchId) emit({ seconds: next })
   }
 
   const fmt = `${pad(minutes)}:${pad(seconds)}`
@@ -140,15 +169,51 @@ export default function ScoringPage() {
             </div>
 
             {/* Clock controls */}
-            <div className="flex items-center gap-2 mt-4 flex-wrap">
-              <button className="btn btn-secondary" onClick={() => changePeriod(-1)} disabled={period <= 1}><i className="bi bi-chevron-left" /></button>
-              <input type="number" min={1} className="input w-20" value={period} onChange={(e) => { const v = Number(e.target.value) || 1; setPeriod(v); if (matchId) emit({ period: v }) }} />
-              <button className="btn btn-secondary" onClick={() => changePeriod(1)}><i className="bi bi-chevron-right" /></button>
-              <button className="btn btn-secondary" onClick={() => setMinutes((v) => Math.max(0, v - 1))}><i className="bi bi-dash" /></button>
-              <span className="font-mono text-xl tabular-nums">{fmt}</span>
-              <button className="btn btn-secondary" onClick={() => setSeconds((v) => (v + 1) % 60)}><i className="bi bi-plus" /></button>
+            <div className="mt-5 flex items-end justify-center gap-3 flex-wrap">
+              {/* Period stepper */}
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] uppercase tracking-widest text-gray-400 mb-1 font-semibold">Period</span>
+                <button className="btn btn-secondary px-3 py-1" onClick={() => changePeriod(1)}><i className="bi bi-chevron-up" /></button>
+                <div className="text-center font-mono text-lg py-1 tabular-nums w-12">{period}</div>
+                <button className="btn btn-secondary px-3 py-1" onClick={() => changePeriod(-1)} disabled={period <= 1}><i className="bi bi-chevron-down" /></button>
+              </div>
+
+              <span className="text-3xl font-mono text-gray-300 pb-8 px-1">:</span>
+
+              {/* Minutes */}
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] uppercase tracking-widest text-gray-400 mb-1 font-semibold">Minutes</span>
+                <button className="btn btn-secondary px-3 py-1" onClick={() => stepMinutes(1)}><i className="bi bi-caret-up-fill" /></button>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={2}
+                  className="input font-mono text-center text-2xl w-20 py-1 tabular-nums"
+                  value={pad(minutes)}
+                  onChange={(e) => onMinutesChange(e.target.value)}
+                />
+                <button className="btn btn-secondary px-3 py-1" onClick={() => stepMinutes(-1)}><i className="bi bi-caret-down-fill" /></button>
+              </div>
+
+              <span className="text-3xl font-mono text-gray-300 pb-8 px-1">:</span>
+
+              {/* Seconds */}
+              <div className="flex flex-col items-center">
+                <span className="text-[10px] uppercase tracking-widest text-gray-400 mb-1 font-semibold">Seconds</span>
+                <button className="btn btn-secondary px-3 py-1" onClick={() => stepSeconds(1)}><i className="bi bi-caret-up-fill" /></button>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={2}
+                  className="input font-mono text-center text-2xl w-20 py-1 tabular-nums"
+                  value={pad(seconds)}
+                  onChange={(e) => onSecondsChange(e.target.value)}
+                />
+                <button className="btn btn-secondary px-3 py-1" onClick={() => stepSeconds(-1)}><i className="bi bi-caret-down-fill" /></button>
+              </div>
+
               <button
-                className={`btn ${running ? 'btn-secondary' : 'btn-primary'}`}
+                className={`btn self-center ${running ? 'btn-secondary' : 'btn-primary'}`}
                 onClick={toggleClock}
               >
                 <i className={`bi ${running ? 'bi-pause-fill' : 'bi-play-fill'}`} />{running ? 'Pause' : 'Start'}
