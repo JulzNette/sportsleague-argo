@@ -22,9 +22,10 @@ _LOAD_OPTIONS = [
 
 
 def _fill_manager_email(db: Session, obj) -> None:
-    """Expose the submitting Team Manager's account email on the response."""
+    """Expose the submitting Team Manager's account email + name on the response."""
     user = db.get(User, obj.created_by)
     obj.manager_email = user.email if user else None
+    obj.manager_name = user.full_name if user else None
 
 
 def _fill_manager_emails(db: Session, objects) -> None:

@@ -22,6 +22,7 @@ export async function sendFeeReminder(r) {
   const to_email = r?.manager_email || r?.contact_email
   const variables = {
     to_email,
+    manager_name: r?.manager_name || r?.coach_name || 'there',
     team_name: r?.team_name,
     coach_name: r?.coach_name,
     registration_fee: r?.registration_fee,

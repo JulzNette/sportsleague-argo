@@ -68,6 +68,7 @@ class RegistrationOut(AuditFieldsOut):
     contact_email: EmailStr | None
     contact_phone: str | None
     manager_email: EmailStr | None = None
+    manager_name: str | None = None
     registration_fee: float | None
     payment_status: str
     notes: str | None
