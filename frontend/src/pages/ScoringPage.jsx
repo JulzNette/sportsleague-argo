@@ -24,6 +24,7 @@ export default function ScoringPage() {
   const [minutes, setMinutes] = useState(0)
   const [seconds, setSeconds] = useState(0)
   const [running, setRunning] = useState(false)
+  const [editTime, setEditTime] = useState(false)
   const validMatches = matches.filter((m) => !['Completed', 'Cancelled', 'Forfeited'].includes(m.status))
 
   const match = matches.find((m) => m.id === matchId)
@@ -125,6 +126,13 @@ export default function ScoringPage() {
     setSeconds(next)
     if (matchId) emit({ seconds: next })
   }
+  function onPeriodChange(raw) {
+    const v = Math.floor(Number(raw))
+    if (raw === '' || Number.isNaN(v)) return
+    const next = clamp(v, 1, 99)
+    setPeriod(next)
+    if (matchId) emit({ period: next })
+  }
 
   const fmt = `${pad(minutes)}:${pad(seconds)}`
 
@@ -158,7 +166,54 @@ export default function ScoringPage() {
             <div className="bg-slate-900 rounded-2xl p-5 text-white">
               <div className="flex items-center justify-between mb-3 text-xs font-semibold uppercase tracking-widest">
                 <span className="flex-1 text-center">{home?.name || 'Home'}</span>
-                <span className="bg-slate-700 text-blue-300 px-3 py-1 rounded-full">Q{period} · {fmt} <span className={running ? 'text-green-400' : 'text-red-400'}>●</span></span>
+                {editTime ? (
+                  <span
+                    className="bg-slate-700 text-blue-300 px-2 py-1 rounded-full flex items-center gap-1 font-mono tabular-nums"
+                    onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setEditTime(false) }}
+                  >
+                    <span className="flex items-center gap-0.5">
+                      Q
+                      <input
+                        autoFocus
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={2}
+                        className="w-6 bg-slate-800 text-center text-blue-300 rounded outline-none"
+                        value={period}
+                        onChange={(e) => onPeriodChange(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                      />
+                    </span>
+                    <span>·</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={2}
+                      className="w-7 bg-slate-800 text-center text-blue-300 rounded outline-none"
+                      value={pad(minutes)}
+                      onChange={(e) => onMinutesChange(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                    />
+                    <span>:</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={2}
+                      className="w-7 bg-slate-800 text-center text-blue-300 rounded outline-none"
+                      value={pad(seconds)}
+                      onChange={(e) => onSecondsChange(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                    />
+                  </span>
+                ) : (
+                  <span
+                    title="Double-click to edit the clock"
+                    className="bg-slate-700 text-blue-300 px-3 py-1 rounded-full cursor-pointer select-none"
+                    onDoubleClick={() => setEditTime(true)}
+                  >
+                    Q{period} · {fmt} <span className={running ? 'text-green-400' : 'text-red-400'}>●</span>
+                  </span>
+                )}
                 <span className="flex-1 text-center">{away?.name || 'Away'}</span>
               </div>
               <div className="flex items-center justify-center gap-6 mb-2">
@@ -169,51 +224,9 @@ export default function ScoringPage() {
             </div>
 
             {/* Clock controls */}
-            <div className="mt-5 flex items-end justify-center gap-3 flex-wrap">
-              {/* Period stepper */}
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] uppercase tracking-widest text-gray-400 mb-1 font-semibold">Period</span>
-                <button className="btn btn-secondary px-3 py-1" onClick={() => changePeriod(1)}><i className="bi bi-chevron-up" /></button>
-                <div className="text-center font-mono text-lg py-1 tabular-nums w-12">{period}</div>
-                <button className="btn btn-secondary px-3 py-1" onClick={() => changePeriod(-1)} disabled={period <= 1}><i className="bi bi-chevron-down" /></button>
-              </div>
-
-              <span className="text-3xl font-mono text-gray-300 pb-8 px-1">:</span>
-
-              {/* Minutes */}
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] uppercase tracking-widest text-gray-400 mb-1 font-semibold">Minutes</span>
-                <button className="btn btn-secondary px-3 py-1" onClick={() => stepMinutes(1)}><i className="bi bi-caret-up-fill" /></button>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={2}
-                  className="input font-mono text-center text-2xl w-20 py-1 tabular-nums"
-                  value={pad(minutes)}
-                  onChange={(e) => onMinutesChange(e.target.value)}
-                />
-                <button className="btn btn-secondary px-3 py-1" onClick={() => stepMinutes(-1)}><i className="bi bi-caret-down-fill" /></button>
-              </div>
-
-              <span className="text-3xl font-mono text-gray-300 pb-8 px-1">:</span>
-
-              {/* Seconds */}
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] uppercase tracking-widest text-gray-400 mb-1 font-semibold">Seconds</span>
-                <button className="btn btn-secondary px-3 py-1" onClick={() => stepSeconds(1)}><i className="bi bi-caret-up-fill" /></button>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={2}
-                  className="input font-mono text-center text-2xl w-20 py-1 tabular-nums"
-                  value={pad(seconds)}
-                  onChange={(e) => onSecondsChange(e.target.value)}
-                />
-                <button className="btn btn-secondary px-3 py-1" onClick={() => stepSeconds(-1)}><i className="bi bi-caret-down-fill" /></button>
-              </div>
-
+            <div className="mt-5 flex items-center justify-center gap-3 flex-wrap">
               <button
-                className={`btn self-center ${running ? 'btn-secondary' : 'btn-primary'}`}
+                className={`btn ${running ? 'btn-secondary' : 'btn-primary'}`}
                 onClick={toggleClock}
               >
                 <i className={`bi ${running ? 'bi-pause-fill' : 'bi-play-fill'}`} />{running ? 'Pause' : 'Start'}
