@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 from pydantic import BaseModel, Field, model_validator
 from app.schemas.common import AuditFieldsOut
 
@@ -47,3 +48,12 @@ class ScoreUpdate(BaseModel):
     period: int | None = Field(default=None, ge=1, le=99)
     minutes: int | None = Field(default=None, ge=0, le=59)
     seconds: int | None = Field(default=None, ge=0, le=59)
+
+
+class ScoreUndo(BaseModel):
+    """One dedicated undo step: subtract points from a single team's running
+    total (clamped so a score never goes negative). Kept separate from the
+    additive ScoreUpdate so scoring stays purely 'add points / advance clock'.
+    """
+    side: Literal["home", "away"] = "home"
+    points: int = Field(default=1, ge=1, le=3)

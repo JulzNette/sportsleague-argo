@@ -83,6 +83,17 @@ export default function ScoringPage() {
     })
   }
 
+  const undoMut = useMutation({
+    mutationFn: ({ id, data }) => endpoints.scoring.undo(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['matches'] }); setError(null) },
+    onError: setError,
+  })
+
+  function undo(side, points) {
+    if (!matchId) return
+    undoMut.mutate({ id: matchId, data: { side, points } })
+  }
+
   function toggleClock() {
     setRunning((r) => !r)
     if (matchId && !running) {
@@ -254,7 +265,10 @@ export default function ScoringPage() {
               <h3 className="text-sm font-semibold text-gray-700 mb-2">{home?.name || 'Home'}</h3>
               <div className="flex gap-2">
                 {[1, 2, 3].map((n) => (
-                  <button key={n} className="btn btn-primary flex-1 text-lg" onClick={() => emit({ home_delta: n })}>+{n}</button>
+                  <span key={n} className="flex flex-1 gap-1">
+                    <button className="btn btn-primary flex-1 text-lg" onClick={() => emit({ home_delta: n })}>+{n}</button>
+                    <button className="btn btn-outline text-lg px-2" title={`Undo ${n} for ${home?.name || 'Home'}`} onClick={() => undo('home', n)}>−{n}</button>
+                  </span>
                 ))}
               </div>
             </div>
@@ -262,7 +276,10 @@ export default function ScoringPage() {
               <h3 className="text-sm font-semibold text-gray-700 mb-2">{away?.name || 'Away'}</h3>
               <div className="flex gap-2">
                 {[1, 2, 3].map((n) => (
-                  <button key={n} className="btn btn-primary flex-1 text-lg" onClick={() => emit({ away_delta: n })}>+{n}</button>
+                  <span key={n} className="flex flex-1 gap-1">
+                    <button className="btn btn-primary flex-1 text-lg" onClick={() => emit({ away_delta: n })}>+{n}</button>
+                    <button className="btn btn-outline text-lg px-2" title={`Undo ${n} for ${away?.name || 'Away'}`} onClick={() => undo('away', n)}>−{n}</button>
+                  </span>
                 ))}
               </div>
             </div>

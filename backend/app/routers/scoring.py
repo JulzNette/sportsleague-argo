@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import CurrentUser, get_db_session, require_permission
 from app.models.match import Match
 from app.models.match_result import MatchResult
-from app.schemas.result import MatchResultOut, ScoreUpdate
+from app.schemas.result import MatchResultOut, ScoreUndo, ScoreUpdate
 
 router = APIRouter(prefix="/matches/{match_id}/score", tags=["Scoring"])
 
@@ -64,4 +64,36 @@ def update_live_score(
         match.status = "In Progress"
         db.commit()
 
+    return result
+
+
+@router.post("/undo", response_model=MatchResultOut, status_code=200, summary="Undo Points")
+def undo_points(
+    match_id: uuid.UUID,
+    payload: ScoreUndo,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("result.update")),
+):
+    """Rewind a mistaken scoreboard entry: subtract `points` from one team's
+    running total. The total is clamped at zero so it never goes negative.
+    """
+    from fastapi import HTTPException
+    match = db.get(Match, match_id)
+    if match is None:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    result = (
+        db.query(MatchResult).filter(MatchResult.match_id == match.id).first()
+    )
+    if result is None:
+        raise HTTPException(status_code=404, detail="No result yet to undo")
+
+    if payload.side == "home":
+        result.home_score = max(0, result.home_score - payload.points)
+    else:
+        result.away_score = max(0, result.away_score - payload.points)
+
+    result.updated_by = user.id
+    db.commit()
+    db.refresh(result)
     return result

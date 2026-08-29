@@ -130,6 +130,7 @@ export const endpoints = {
   },
   scoring: {
     update: (matchId, data) => api.post(`/matches/${matchId}/score`, data),
+    undo: (matchId, data) => api.post(`/matches/${matchId}/score/undo`, data),
   },
   standings: {
     get: (seasonId, divisionId) =>
