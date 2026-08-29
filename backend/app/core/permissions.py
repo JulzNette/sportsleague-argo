@@ -57,10 +57,8 @@ PERMISSIONS: dict[str, list[str]] = {
     "result.submit": ["League Administrator", "Season Manager", "Referee", *_ADMIN_ROLES],
     "result.update": ["League Administrator", "Season Manager", *_ADMIN_ROLES],
     "standing.view": _ALL_ROLES,
-    "player_stat.view": _ALL_ROLES,
-    "player_stat.enter": [
-        "League Administrator", "Season Manager", "Referee", *_ADMIN_ROLES,
-    ],
+    "player_stat.view": [r for r in _ALL_ROLES if r != "Team Manager"],
+    "player_stat.enter": _ADMIN_ROLES,
     "report.view": ["League Administrator", "Season Manager", *_ADMIN_ROLES],
     "report.generate": ["League Administrator", "Season Manager", *_ADMIN_ROLES],
     "notification.view": _ALL_ROLES,

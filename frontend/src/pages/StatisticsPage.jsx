@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { endpoints } from '../lib/api'
+import { can } from '../lib/permissions'
+import { useAuthStore } from '../store/authStore'
 import PageHead from '../components/PageHead'
 import DataTable from '../components/DataTable'
 
@@ -54,6 +56,8 @@ const PLAYER_METRICS = [
 ]
 
 export default function StatisticsPage() {
+  const role = useAuthStore((s) => s.role)
+  const canViewPlayerStats = can(role, 'player_stat.view')
   const { data: seasons } = useQuery({ queryKey: ['seasons'], queryFn: () => endpoints.seasons.list().then((r) => r.data) })
   const [seasonId, setSeasonId] = useState('')
   const { data: divisions } = useQuery({
@@ -129,34 +133,38 @@ export default function StatisticsPage() {
             emptyLabel="No completed matches yet for this season/division."
           />
 
-          <h2 className="text-lg font-bold text-gray-900 mt-8 mb-4">Player statistics</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 mb-6">
-            {PLAYER_METRICS.map((m) => (
-              <LeaderboardCard
-                key={m.key}
-                metric={m}
-                rows={[...playerRows].sort((a, b) => b[m.key] - a[m.key]).slice(0, 5)}
-                nameKey="player_name"
-                idKey="player_id"
-              />
-            ))}
-          </div>
+          {canViewPlayerStats && (
+            <>
+              <h2 className="text-lg font-bold text-gray-900 mt-8 mb-4">Player statistics</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 mb-6">
+                {PLAYER_METRICS.map((m) => (
+                  <LeaderboardCard
+                    key={m.key}
+                    metric={m}
+                    rows={[...playerRows].sort((a, b) => b[m.key] - a[m.key]).slice(0, 5)}
+                    nameKey="player_name"
+                    idKey="player_id"
+                  />
+                ))}
+              </div>
 
-          <DataTable
-            columns={[
-              { key: 'rank', label: '#', render: (r) => r.rank },
-              { key: 'player_name', label: 'Player', render: (r) => <span className="font-semibold text-gray-900">{r.player_name}</span> },
-              { key: 'team_name', label: 'Team' },
-              { key: 'games_played', label: 'GP' },
-              { key: 'points', label: 'PTS', render: (r) => <b>{r.points}</b> },
-              { key: 'assists', label: 'AST' },
-              { key: 'rebounds', label: 'REB' },
-              { key: 'steals', label: 'STL' },
-              { key: 'fouls', label: 'FLS' },
-            ]}
-            rows={playerRows}
-            emptyLabel="No player statistics recorded yet for this season/division."
-          />
+              <DataTable
+                columns={[
+                  { key: 'rank', label: '#', render: (r) => r.rank },
+                  { key: 'player_name', label: 'Player', render: (r) => <span className="font-semibold text-gray-900">{r.player_name}</span> },
+                  { key: 'team_name', label: 'Team' },
+                  { key: 'games_played', label: 'GP' },
+                  { key: 'points', label: 'PTS', render: (r) => <b>{r.points}</b> },
+                  { key: 'assists', label: 'AST' },
+                  { key: 'rebounds', label: 'REB' },
+                  { key: 'steals', label: 'STL' },
+                  { key: 'fouls', label: 'FLS' },
+                ]}
+                rows={playerRows}
+                emptyLabel="No player statistics recorded yet for this season/division."
+              />
+            </>
+          )}
         </>
       )}
     </div>
