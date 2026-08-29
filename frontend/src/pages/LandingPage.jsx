@@ -174,6 +174,45 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+
+        {/* Live matchups right under the scoreboard */}
+        <div id="schedule" style={{ position: 'relative', zIndex: 2, margin: 'clamp(24px,5vw,40px) 0 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.blue, fontWeight: 700, marginBottom: 14 }}>
+            Upcoming &amp; Live Matchups<span style={{ flex: 1, height: 1, background: '#E7E4DC' }} />
+          </div>
+          <div style={{ background: C.panel, border: '1px solid #E7E4DC', borderRadius: 6, overflow: 'hidden' }}>
+            {schedule.length === 0 ? (
+              <div style={{ padding: '28px 22px', color: C.dim, fontSize: 14 }}>No matches are scheduled yet. Check back soon.</div>
+            ) : (
+              schedule.map((m, i) => (
+                <div key={m.id || i} className="lp-sched" style={{ display: 'grid', gridTemplateColumns: '110px 1fr auto', gap: 18, alignItems: 'center', padding: '16px clamp(14px,2vw,22px)', borderBottom: i < schedule.length - 1 ? '1px solid #E7E4DC' : 'none' }}>
+                  <div>
+                    <span style={{ ...MONO, color: C.accent, fontSize: 13, display: 'block' }}>{fmtDate(m.scheduled_date)}</span>
+                    {m.scheduled_time && <span style={{ ...MONO, color: C.blue, fontSize: 11 }}>{fmtTime(m.scheduled_time)}</span>}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {m.home_team} <span style={{ color: C.dim, fontWeight: 500 }}>vs</span> {m.away_team}
+                    </div>
+                    {(m.home_score != null || m.away_score != null) && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                        <span style={{ ...MONO, color: C.blue, fontSize: 17, fontWeight: 700 }}>{m.home_score ?? 0} – {m.away_score ?? 0}</span>
+                        {m.status === 'In Progress' && (m.minutes != null || m.seconds != null) && (
+                          <span style={{ ...MONO, fontSize: 11, color: C.accent, border: '1px solid #E7E4DC', padding: '2px 7px', borderRadius: 100 }}>
+                            Q{m.period ?? 1} · {String(m.minutes ?? 0).padStart(2, '0')}:{String(m.seconds ?? 0).padStart(2, '0')}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: statusColor(m.status), border: '1px solid #E7E4DC', padding: '5px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>
+                    {m.status}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </section>
 
       {/* ABOUT */}
@@ -212,48 +251,6 @@ export default function LandingPage() {
               <span style={{ ...MONO, color: C.blue, fontSize: 13, marginBottom: 26, display: 'block' }}>{d.num}</span>
               <h3 style={{ ...DISPLAY, fontSize: 21, marginBottom: 10, letterSpacing: '0.02em' }}>{d.title}</h3>
               <p style={{ color: C.dim, fontSize: 13.5, lineHeight: 1.6 }}>{d.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* SCHEDULE */}
-      <section id="schedule" style={SECT}>
-        <div style={KICKER}>Schedule<span style={{ flex: 1, height: 1, background: '#E7E4DC' }} /></div>
-        <h2 style={HEAD}>Two weekends. One champion per bracket.</h2>
-        <p style={{ maxWidth: 600, color: C.dim, fontSize: 17, lineHeight: 1.7 }}>Live from the league schedule — every matchup below comes straight from the league's match scheduling.</p>
-        <div style={{ marginTop: 50, borderTop: '1px solid #E7E4DC' }}>
-          {schedule.length === 0 && (
-            <div style={{ padding: '40px 0', borderBottom: '1px solid #E7E4DC', color: C.dim, fontSize: 14 }}>
-              No matches are scheduled yet. Check back soon.
-            </div>
-          )}
-          {schedule.map((m, i) => (
-            <div key={m.id || i} className="lp-sched" style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 24, alignItems: 'center', padding: '22px 0', borderBottom: '1px solid #E7E4DC' }}>
-              <div>
-                <span style={{ ...MONO, color: C.accent, fontSize: 14, display: 'block' }}>{fmtDate(m.scheduled_date)}</span>
-                {m.scheduled_time && <span style={{ ...MONO, color: C.blue, fontSize: 12 }}>{fmtTime(m.scheduled_time)}</span>}
-              </div>
-              <div>
-                <h4 style={{ fontSize: 17, fontWeight: 700 }}>
-                  {m.home_team} <span style={{ color: C.dim, fontWeight: 500 }}>vs</span> {m.away_team}
-                </h4>
-                {(m.home_score != null || m.away_score != null) && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-                    <span style={{ ...MONO, color: C.blue, fontSize: 22, fontWeight: 700 }}>
-                      {m.home_score ?? 0} – {m.away_score ?? 0}
-                    </span>
-                    {(m.status === 'In Progress' && (m.minutes != null || m.seconds != null)) && (
-                      <span style={{ ...MONO, fontSize: 12, color: C.accent, border: '1px solid #E7E4DC', padding: '3px 8px', borderRadius: 100 }}>
-                        Q{m.period ?? 1} · {String(m.minutes ?? 0).padStart(2, '0')}:{String(m.seconds ?? 0).padStart(2, '0')}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-              <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: statusColor(m.status), border: '1px solid #E7E4DC', padding: '6px 12px', borderRadius: 100, whiteSpace: 'nowrap' }}>
-                {m.status}
-              </span>
             </div>
           ))}
         </div>
