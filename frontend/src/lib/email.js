@@ -1,12 +1,12 @@
 /**
  * EmailJS delivery for the Sports League module.
  *
- * The ONLY emailed message is the registration-fee reminder, sent to the Team
- * Manager when an admin clicks "Email registrant". It sends directly from the
- * browser via EmailJS, so no SMTP/domain verification is needed and the
- * manager receives it for real. If EmailJS isn't configured (dev without env
- * vars) this logs instead of failing, so the feature never breaks the host
- * flow that triggered it.
+ * Emails are sent directly from the browser via EmailJS, so no SMTP/domain
+ * verification is needed and recipients get them for real:
+ *  - the registration-fee reminder (admin clicks "Email registrant"), and
+ *  - the sign-up email-verification code (sent to whatever address was typed).
+ * If EmailJS isn't configured (dev without env vars) this logs instead of
+ * failing, so the feature never breaks the host flow that triggered it.
  */
 import emailjs from '@emailjs/browser'
 
