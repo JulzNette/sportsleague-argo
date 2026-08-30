@@ -30,6 +30,8 @@ export default function PlayersPage() {
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [error, setError] = useState(null)
+  const [loginFor, setLoginFor] = useState(null)
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' })
   const [sportFilter, setSportFilter] = useState('Basketball')
 
   const teamName = (id) => teams?.find((t) => t.id === id)?.name || 'Unassigned'
@@ -49,6 +51,13 @@ export default function PlayersPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['players'] }),
     onError: setError,
   })
+  const accountMut = useMutation({
+    mutationFn: ({ id, data }) => endpoints.players.createAccount(id, data),
+    onSuccess: () => { setLoginFor(null); setLoginForm({ email: '', password: '' }); setError(null) },
+    onError: setError,
+  })
+
+  function openLogin(p) { setLoginFor(p); setLoginForm({ email: '', password: '' }); setError(null) }
 
   function openCreate() { setForm({ ...EMPTY, team_id: teams?.[0]?.id || '' }); setError(null); setModal('create') }
   function openEdit(p) { setForm(p); setError(null); setModal(p) }
@@ -128,7 +137,7 @@ export default function PlayersPage() {
                         <th className="text-left font-semibold text-gray-500 uppercase text-xs tracking-wide px-4 py-2">#</th>
                         <th className="text-left font-semibold text-gray-500 uppercase text-xs tracking-wide px-4 py-2">Contact</th>
                         <th className="text-left font-semibold text-gray-500 uppercase text-xs tracking-wide px-4 py-2">Status</th>
-                        {(can(role, 'player.update') || can(role, 'player.delete')) && <th className="w-1" />}
+                        {(can(role, 'player.update') || can(role, 'player.delete') || can(role, 'player.login')) && <th className="w-1" />}
                       </tr>
                     </thead>
                     <tbody>
@@ -139,9 +148,14 @@ export default function PlayersPage() {
                           <td className="px-4 py-2.5 text-gray-700">{p.jersey_number || '—'}</td>
                           <td className="px-4 py-2.5 text-gray-500">{p.contact_phone || '—'}</td>
                           <td className="px-4 py-2.5"><Badge status={p.status} /></td>
-                          {(can(role, 'player.update') || can(role, 'player.delete')) && (
+                          {(can(role, 'player.update') || can(role, 'player.delete') || can(role, 'player.login')) && (
                             <td className="px-4 py-2.5 text-right whitespace-nowrap">
                               <div className="flex justify-end gap-1">
+                                {can(role, 'player.login') && (
+                                  <button onClick={() => openLogin(p)} title="Create login" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-100">
+                                    <i className="bi bi-box-arrow-in-right" />
+                                  </button>
+                                )}
                                 {can(role, 'player.update') && (
                                   <button onClick={() => openEdit(p)} title="Edit" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-100">
                                     <i className="bi bi-pencil" />
@@ -194,6 +208,30 @@ export default function PlayersPage() {
               <option>Active</option><option>Inactive</option><option>Suspended</option>
             </select>
           </Field>
+        </Modal>
+      )}
+
+      {loginFor && (
+        <Modal
+          title={`Create login for ${loginFor.full_name}`}
+          subtitle="This creates a Player account — view-only access to the league."
+          onClose={() => setLoginFor(null)}
+          footer={<>
+            <button className="btn btn-secondary" onClick={() => setLoginFor(null)}>Cancel</button>
+            <button className="btn btn-primary" disabled={accountMut.isPending} onClick={() => accountMut.mutate({ id: loginFor.id, data: loginForm })}>
+              <i className="bi bi-check-lg" />Create account
+            </button>
+          </>}
+        >
+          <ErrorBanner error={error} />
+          <Field label="Login email"><input className="input" type="email" value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} /></Field>
+          <Field label="Temporary password">
+            <input className="input" type="password" value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} />
+            <p className="text-xs text-gray-400 mt-1">At least 8 characters. Tell the player to change it after logging in.</p>
+          </Field>
+          <div className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-md px-3 py-2 mt-1">
+            The player can sign in and view standings, schedule, and their own stats — they cannot manage anything.
+          </div>
         </Modal>
       )}
     </div>

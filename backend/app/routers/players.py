@@ -1,13 +1,51 @@
 import uuid
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import CurrentUser, get_db_session, require_permission
+from app.core.security import hash_password
 from app.models.player import Player
-from app.schemas.player import PlayerCreate, PlayerOut, PlayerUpdate
+from app.models.registration import Registration
+from app.models.stub import User
+from app.models.team import Team
+from app.schemas.player import PlayerAccountCreate, PlayerAccountOut, PlayerCreate, PlayerOut, PlayerUpdate
 from app.services import crud
 
 router = APIRouter(prefix="/players", tags=["Players"])
+
+TEAM_MANAGER = "Team Manager"
+
+
+def _manager_team_ids(db: Session, user: CurrentUser):
+    """Teams this Team Manager owns, derived from the approved registrations they
+    submitted (created_by == their account) - the same ownership convention the
+    registration workflow uses to scope a manager's view."""
+    if user.role != TEAM_MANAGER:
+        return None
+    ids: set[uuid.UUID] = set()
+    regs = db.query(Registration).filter(
+        Registration.organization_id == user.organization_id,
+        Registration.created_by == user.id,
+        Registration.status == "Approved",
+    ).all()
+    for reg in regs:
+        team = db.query(Team).filter(
+            Team.organization_id == user.organization_id,
+            Team.division_id == reg.division_id,
+            Team.name == reg.team_name,
+        ).first()
+        if team is not None:
+            ids.add(team.id)
+    return ids
+
+
+def _ensure_player_allowed(db: Session, user: CurrentUser, player: Player) -> None:
+    own = _manager_team_ids(db, user)
+    if own is not None and player.team_id not in own:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only create logins for players on your own team.",
+        )
 
 
 @router.get("", response_model=list[PlayerOut], summary="List Players")
@@ -92,3 +130,44 @@ def purge_player(
         db, Player, organization_id=user.organization_id, record_id=player_id, include_archived=True
     )
     crud.purge_scoped(db, obj)
+
+
+@router.post("/{player_id}/account", response_model=PlayerAccountOut, status_code=201, summary="Create a Player login account")
+def create_player_account(
+    player_id: uuid.UUID,
+    payload: PlayerAccountCreate,
+    db: Session = Depends(get_db_session),
+    user: CurrentUser = Depends(require_permission("player.login")),
+):
+    """Create a Player-role login for a roster member. The Team Manager does this
+    for their own players (scoped), admins for anyone. The account can only view
+    the league - it cannot manage anything."""
+    player = crud.get_scoped_or_404(
+        db, Player, organization_id=user.organization_id, record_id=player_id
+    )
+    _ensure_player_allowed(db, user, player)
+
+    email = payload.email.lower()
+    existing = db.query(User).filter(User.email == email).first()
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists.",
+        )
+
+    account = User(
+        organization_id=user.organization_id,
+        email=email,
+        hashed_password=hash_password(payload.password),
+        full_name=player.full_name,
+        contact_phone=player.contact_phone,
+        role="Player",
+        is_active=True,
+    )
+    db.add(account)
+    db.commit()
+    db.refresh(account)
+    return PlayerAccountOut(
+        player_id=player.id, email=account.email,
+        full_name=account.full_name, role=account.role,
+    )

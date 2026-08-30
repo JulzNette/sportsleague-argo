@@ -27,7 +27,7 @@ def public_settings(
     return PublicSettingsOut(
         registration_fee=settings_service.get_default_fee(db, organization_id=org.id),
         pricing=settings_service.get_setting(db, organization_id=org.id, key=settings_service.KEY_PRICING) or [],
-        rewards=settings_service.get_setting(db, organization_id=org.id, key=settings_service.KEY_REWARDS) or [],
+        rewards=settings_service.get_rewards(db, organization_id=org.id),
         foul_limit=settings_service.get_foul_limit(db, organization_id=org.id),
     )
 
@@ -64,7 +64,7 @@ def admin_settings(
         registration_fee=default_fee,
         configured_fee=default_fee is not None,
         pricing=settings_service.get_setting(db, organization_id=org_id, key=settings_service.KEY_PRICING) or [],
-        rewards=settings_service.get_setting(db, organization_id=org_id, key=settings_service.KEY_REWARDS) or [],
+        rewards=settings_service.get_rewards(db, organization_id=org_id),
         division_fees=[DivisionFeeOut.model_validate(f, from_attributes=True) for f in fees],
         foul_limit=settings_service.get_foul_limit(db, organization_id=org_id),
     )

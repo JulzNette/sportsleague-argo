@@ -86,6 +86,7 @@ export const endpoints = {
     archived: () => api.get('/players/archived'),
     restore: (id) => api.post(`/players/${id}/restore`),
     purge: (id) => api.delete(`/players/${id}/purge`),
+    createAccount: (id, data) => api.post(`/players/${id}/account`, data),
   },
   coaches: {
     list: (params) => api.get('/coaches', { params }),

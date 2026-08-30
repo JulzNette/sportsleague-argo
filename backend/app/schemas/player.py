@@ -1,6 +1,6 @@
 import uuid
 from datetime import date
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from app.schemas.common import AuditFieldsOut
 
 _STATUS = "^(Active|Inactive|Suspended)$"
@@ -32,3 +32,17 @@ class PlayerUpdate(BaseModel):
 
 class PlayerOut(PlayerBase, AuditFieldsOut):
     pass
+
+
+class PlayerAccountCreate(BaseModel):
+    """Credential set for a player's login. The account is created with the
+    Player role so they can only view (standings, schedule, their stats)."""
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+
+
+class PlayerAccountOut(BaseModel):
+    player_id: uuid.UUID
+    email: str
+    full_name: str
+    role: str

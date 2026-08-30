@@ -258,6 +258,14 @@ def test_admin_can_set_pricing_and_rewards_content(client, dbsession, org, seaso
     assert pub["rewards"][0]["division"] == "Open Men's"
 
 
+def test_public_rewards_show_default_podium_when_unconfigured(client, dbsession, org):
+    pub = client.get("/api/v1/settings/public").json()
+    places = [r["place"] for r in pub["rewards"]]
+    assert "Champion" in places
+    assert "1st" in places
+    assert "2nd" in places
+
+
 def test_public_division_fee_resolver(client, dbsession, org, season_division_teams):
     _set_default_fee(dbsession, org, 100)
     _, division, _ = season_division_teams

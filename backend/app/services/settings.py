@@ -23,6 +23,22 @@ DEFAULT_FOUL_LIMIT = 5
 # Optional keys that start empty; absent = not configured yet.
 _OPTIONAL_KEYS = {KEY_PRICING, KEY_REWARDS}
 
+# Default podium prizes shown on the public Rewards page so visitors always see
+# Champion / 1st / 2nd pricing even before the league administrator publishes
+# their own content. An admin's configured rewards entirely replace this.
+DEFAULT_REWARDS = [
+    {"division": "Championship", "place": "Champion", "prize": "Champion trophy + ₱50,000 cash"},
+    {"division": "Championship", "place": "1st", "prize": "Runner-up medals + ₱20,000 cash"},
+    {"division": "Championship", "place": "2nd", "prize": "Bronze medals + ₱10,000 cash"},
+]
+
+
+def get_rewards(db: Session, *, organization_id: uuid.UUID) -> list:
+    value = get_setting(db, organization_id=organization_id, key=KEY_REWARDS)
+    if not value:
+        return [dict(item) for item in DEFAULT_REWARDS]
+    return value
+
 
 def _scalar(value: Decimal | float | int | None) -> float | None:
     if value is None:
