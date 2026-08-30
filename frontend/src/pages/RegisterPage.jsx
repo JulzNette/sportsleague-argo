@@ -168,7 +168,7 @@ export default function RegisterPage() {
             <p className="mb-4 text-sm text-gray-500">
               We emailed a 6-digit code to <span className="font-semibold text-gray-700">{email}</span>. Enter it to finish signing up.
             </p>
-            {simulatedCode && (
+            {simulatedCode && emailNotice && (
               <div className="mb-4 text-center text-sm bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-3 py-2">
                 <div className="font-semibold mb-1">Your code (email delivery not set up yet)</div>
                 <div className="text-2xl font-bold tracking-[0.3em] text-gray-900">{simulatedCode}</div>
