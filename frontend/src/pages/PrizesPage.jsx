@@ -129,7 +129,7 @@ export default function PrizesPage() {
                         {isRanked(e) ? rankOf(e) : <i className="bi bi-star-fill" style={{ fontSize: 13 }} />}
                       </div>
                       <div>
-                        <div className="prz-rest-main">{e.prize || labelOf(e) || 'Prize'}</div>
+                        <div className="prz-rest-main">{[labelOf(e), e.prize].filter(Boolean).join(' — ') || 'Prize'}</div>
                         {e.incentive && <div className="prz-rest-sub">{e.incentive}</div>}
                       </div>
                     </div>
