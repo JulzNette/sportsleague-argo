@@ -49,6 +49,28 @@ function LeaderboardCard({ metric, rows, nameKey = 'team_name', idKey = 'team_id
   )
 }
 
+function MiniBar({ title, icon, data, xKey, bars, height = 230 }) {
+  return (
+    <div className="card p-4">
+      <h3 className="font-semibold text-sm text-gray-900 mb-1 flex items-center gap-2">
+        <i className={`bi ${icon} text-emerald-500`} /> {title}
+      </h3>
+      <p className="text-xs text-gray-500 mb-3">Top entries for this metric.</p>
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+          <XAxis dataKey={xKey} tick={{ fontSize: 10 }} interval={0} angle={-18} textAnchor="end" height={56} />
+          <YAxis tick={{ fontSize: 10 }} />
+          <Tooltip />
+          {bars.map((b) => (
+            <Bar key={b.dataKey} dataKey={b.dataKey} name={b.name} fill={b.fill} radius={[4, 4, 0, 0]} />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 const PLAYER_METRICS = [
   { key: 'points', label: 'Top scorer', icon: 'bi-trophy', format: (r) => `${r.points} pts` },
   { key: 'assists', label: 'Top playmaker', icon: 'bi-dribbble', format: (r) => `${r.assists} ast` },
@@ -113,26 +135,43 @@ export default function StatisticsPage() {
           </div>
 
           {rows.length > 0 && (
-            <div className="card p-4 mb-6">
-              <h3 className="font-semibold text-sm text-gray-900 mb-1 flex items-center gap-2">
-                <i className="bi bi-bar-chart-line text-emerald-500" /> Points scored vs. allowed
-              </h3>
-              <p className="text-xs text-gray-500 mb-4">Per completed match results, across all teams in the selected season/division.</p>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart
-                  data={rows.slice().sort((a, b) => b.points_for - a.points_for)}
-                  margin={{ top: 4, right: 8, left: -14, bottom: 4 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="team_name" tick={{ fontSize: 11 }} interval={0} angle={-18} textAnchor="end" height={60} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="points_for" name="Points scored" fill="#2563EB" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="points_against" name="Points allowed" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 mb-6">
+                <div className="lg:col-span-2">
+                  <MiniBar
+                    title="Points scored vs. allowed"
+                    icon="bi-bar-chart-line"
+                    data={[...rows].sort((a, b) => b.points_for - a.points_for)}
+                    xKey="team_name"
+                    bars={[
+                      { dataKey: 'points_for', name: 'Points scored', fill: '#2563EB' },
+                      { dataKey: 'points_against', name: 'Points allowed', fill: '#F59E0B' },
+                    ]}
+                  />
+                </div>
+                <MiniBar
+                  title="League points"
+                  icon="bi-trophy"
+                  data={[...rows].sort((a, b) => b.points - a.points).slice(0, 8)}
+                  xKey="team_name"
+                  bars={[{ dataKey: 'points', name: 'League points', fill: '#2563EB' }]}
+                />
+                <MiniBar
+                  title="Wins"
+                  icon="bi-award"
+                  data={[...rows].sort((a, b) => b.wins - a.wins).slice(0, 8)}
+                  xKey="team_name"
+                  bars={[{ dataKey: 'wins', name: 'Wins', fill: '#10B981' }]}
+                />
+                <MiniBar
+                  title="Point differential (+/-)"
+                  icon="bi-graph-up-arrow"
+                  data={[...rows].sort((a, b) => b.point_differential - a.point_differential).slice(0, 8)}
+                  xKey="team_name"
+                  bars={[{ dataKey: 'point_differential', name: '+/-', fill: '#4F46E5' }]}
+                />
+              </div>
+            </>
           )}
 
           <DataTable
@@ -171,6 +210,39 @@ export default function StatisticsPage() {
                   />
                 ))}
               </div>
+
+              {playerRows.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-6">
+                  <MiniBar
+                    title="Top scorers"
+                    icon="bi-trophy"
+                    data={[...playerRows].sort((a, b) => b.points - a.points).slice(0, 8)}
+                    xKey="player_name"
+                    bars={[{ dataKey: 'points', name: 'Points', fill: '#2563EB' }]}
+                  />
+                  <MiniBar
+                    title="Top playmakers"
+                    icon="bi-dribbble"
+                    data={[...playerRows].sort((a, b) => b.assists - a.assists).slice(0, 8)}
+                    xKey="player_name"
+                    bars={[{ dataKey: 'assists', name: 'Assists', fill: '#10B981' }]}
+                  />
+                  <MiniBar
+                    title="Top rebounders"
+                    icon="bi-arrow-up-circle"
+                    data={[...playerRows].sort((a, b) => b.rebounds - a.rebounds).slice(0, 8)}
+                    xKey="player_name"
+                    bars={[{ dataKey: 'rebounds', name: 'Rebounds', fill: '#F59E0B' }]}
+                  />
+                  <MiniBar
+                    title="Most steals"
+                    icon="bi-lightning"
+                    data={[...playerRows].sort((a, b) => b.steals - a.steals).slice(0, 8)}
+                    xKey="player_name"
+                    bars={[{ dataKey: 'steals', name: 'Steals', fill: '#4F46E5' }]}
+                  />
+                </div>
+              )}
 
               <DataTable
                 columns={[
