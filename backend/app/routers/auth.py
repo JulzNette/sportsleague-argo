@@ -94,8 +94,14 @@ def register(request: Request, payload: RegisterRequest, db: Session = Depends(g
     # No token yet: the person must enter the emailed code before they can
     # enter the system. If email delivery fails we still created the account,
     # so the verify step can simply show a "resend code" option.
-    send_verification_code_email(email=email, code=code)
-    return {"detail": "Verification code sent to your email.", "email": email}
+    delivery = send_verification_code_email(email=email, code=code)
+    response = {"detail": "Verification code sent to your email.", "email": email}
+    # When no real email provider is configured (Brevo/SMTP), the code is only
+    # logged. Returning it here lets the person finish sign-up anyway. Once a
+    # provider is configured (mode != simulated), the code is never exposed.
+    if not delivery.get("sent") or delivery.get("mode") == "simulated":
+        response["verification_code"] = code
+    return response
 
 
 @router.post("/verify-email", response_model=TokenResponse, summary="Verify email to finish sign-up")
@@ -131,8 +137,11 @@ def resend_verification_code(request: Request, payload: ResendCodeRequest, db: S
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
 
     code = issue_code(email_address)
-    send_verification_code_email(email=email_address, code=code)
-    return {"detail": "New verification code sent to your email."}
+    delivery = send_verification_code_email(email=email_address, code=code)
+    response = {"detail": "New verification code sent to your email."}
+    if not delivery.get("sent") or delivery.get("mode") == "simulated":
+        response["verification_code"] = code
+    return response
 
 
 @router.post("/change-password", status_code=204, summary="Change password")

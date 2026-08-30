@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1) // 1 = details, 2 = email code
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
+  const [simulatedCode, setSimulatedCode] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const login = useAuthStore((s) => s.login)
@@ -35,8 +36,9 @@ export default function RegisterPage() {
     if (Object.keys(errors).length > 0) return
     setLoading(true)
     try {
-      await endpoints.register({ full_name: fullName, email, contact_phone: contactPhone, password })
+      const res = await endpoints.register({ full_name: fullName, email, contact_phone: contactPhone, password })
       setNotice('A 6-digit verification code was sent to your email. Enter it below to finish creating your account.')
+      setSimulatedCode(res.data.verification_code || null)
       setStep(2)
     } catch (err) {
       setError(err)
@@ -66,8 +68,9 @@ export default function RegisterPage() {
     setNotice(null)
     setLoading(true)
     try {
-      await endpoints.resendVerificationCode({ email })
+      const res = await endpoints.resendVerificationCode({ email })
       setNotice('A new verification code was sent to your email.')
+      setSimulatedCode(res.data.verification_code || null)
     } catch (err) {
       setError(err)
     } finally {
@@ -138,6 +141,13 @@ export default function RegisterPage() {
             <p className="mb-4 text-sm text-gray-500">
               We emailed a 6-digit code to <span className="font-semibold text-gray-700">{email}</span>. Enter it to finish signing up.
             </p>
+            {simulatedCode && (
+              <div className="mb-4 text-center text-sm bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-3 py-2">
+                <div className="font-semibold mb-1">No email provider is configured for this demo.</div>
+                <div className="text-2xl font-bold tracking-[0.3em] text-gray-900">{simulatedCode}</div>
+                <div className="mt-1 text-xs text-amber-700">Enter this code to continue.</div>
+              </div>
+            )}
             <button className="btn btn-primary w-full justify-center" disabled={loading || code.length !== 6}>
               {loading ? 'Verifying...' : 'Verify & continue'}
             </button>
