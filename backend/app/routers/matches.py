@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload, aliased
@@ -50,27 +51,32 @@ def public_schedule(db: Session = Depends(get_db_session)):
         )
         .all()
     )
-    return [
-        PublicMatchOut(
-            id=m.id,
-            home_team=home_name,
-            away_team=away_name,
-            division=division_name,
-            season=season_name,
-            scheduled_date=m.scheduled_date,
-            scheduled_time=m.scheduled_time,
-            venue=m.venue,
-            round_number=m.round_number,
-            match_type=m.match_type,
-            status=m.status,
-            home_score=r.home_score if r else None,
-            away_score=r.away_score if r else None,
-            period=r.period if r else None,
-            minutes=r.minutes if r else None,
-            seconds=r.seconds if r else None,
+    now = datetime.now()
+    out = []
+    for (m, home_name, away_name, division_name, season_name, r) in rows:
+        live = m.status == "In Progress" and now >= datetime.combine(m.scheduled_date, m.scheduled_time)
+        display_status = "In Progress" if live else ("Scheduled" if m.status == "In Progress" else m.status)
+        out.append(
+            PublicMatchOut(
+                id=m.id,
+                home_team=home_name,
+                away_team=away_name,
+                division=division_name,
+                season=season_name,
+                scheduled_date=m.scheduled_date,
+                scheduled_time=m.scheduled_time,
+                venue=m.venue,
+                round_number=m.round_number,
+                match_type=m.match_type,
+                status=display_status,
+                home_score=(r.home_score if r else None) if live else None,
+                away_score=(r.away_score if r else None) if live else None,
+                period=(r.period if r else None) if live else None,
+                minutes=(r.minutes if r else None) if live else None,
+                seconds=(r.seconds if r else None) if live else None,
+            )
         )
-        for (m, home_name, away_name, division_name, season_name, r) in rows
-    ]
+    return out
 
 
 @router.get("", response_model=list[MatchOut], summary="List Matches")

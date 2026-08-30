@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
@@ -60,7 +61,11 @@ def update_live_score(
     db.commit()
     db.refresh(result)
 
-    if match.status == "Scheduled" and (payload.home_delta or payload.away_delta):
+    if (
+        match.status == "Scheduled"
+        and (payload.home_delta or payload.away_delta)
+        and datetime.now() >= datetime.combine(match.scheduled_date, match.scheduled_time)
+    ):
         match.status = "In Progress"
         db.commit()
 
