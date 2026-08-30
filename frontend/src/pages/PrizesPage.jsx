@@ -24,6 +24,7 @@ export default function PrizesPage() {
     return a.place?.toLowerCase().localeCompare(b.place?.toLowerCase())
   })
 
+  const isRanked = (e) => e.place?.trim() && PLACE_RANK[e.place.trim().toLowerCase()] != null
   const rankOf = (e) => (PLACE_RANK[e.place?.trim().toLowerCase()] ?? 98) + 1
   const labelOf = (e) => PLACE_LABEL[e.place?.trim().toLowerCase()] || e.place || 'Place'
 
@@ -124,9 +125,11 @@ export default function PrizesPage() {
                 <div className="prz-rest">
                   {rest.map((e, i) => (
                     <div key={i} className="prz-rest-row">
-                      <div className="prz-rest-rank">{rankOf(e)}</div>
+                      <div className="prz-rest-rank">
+                        {isRanked(e) ? rankOf(e) : <i className="bi bi-star-fill" style={{ fontSize: 13 }} />}
+                      </div>
                       <div>
-                        <div className="prz-rest-main">{e.prize || e.place || 'Prize'}</div>
+                        <div className="prz-rest-main">{e.prize || labelOf(e) || 'Prize'}</div>
                         {e.incentive && <div className="prz-rest-sub">{e.incentive}</div>}
                       </div>
                     </div>
