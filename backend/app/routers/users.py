@@ -119,3 +119,21 @@ def deactivate_user(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot deactivate your own account.")
     user.is_active = False
     db.commit()
+
+
+@router.delete("/{user_id}/purge", status_code=204, summary="Permanently delete a user")
+def purge_user(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current: CurrentUser = Depends(require_permission("user.purge")),
+):
+    """
+    Hard-deletes the account row so its email is freed up and can be used again
+    for a new registration. This is permanent and cannot be undone. Only
+    Superadmins can do this, and you cannot purge your own account.
+    """
+    user = _get_user(db, user_id, current.organization_id)
+    if user.id == current.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot delete your own account.")
+    db.delete(user)
+    db.commit()

@@ -72,6 +72,7 @@ PERMISSIONS: dict[str, list[str]] = {
     "user.update": ["Superadmin"],
     "user.delete": ["Superadmin"],
     "user.reset_password": ["Superadmin"],
+    "user.purge": ["Superadmin"],
     "user.assign_role": ["Superadmin"],
 }
 

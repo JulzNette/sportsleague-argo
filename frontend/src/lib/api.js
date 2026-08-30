@@ -164,6 +164,7 @@ export const endpoints = {
     update: (id, data) => api.patch(`/users/${id}`, data),
     resetPassword: (id, data) => api.post(`/users/${id}/reset-password`, data),
     remove: (id) => api.delete(`/users/${id}`),
+    purge: (id) => api.delete(`/users/${id}/purge`),
   },
   settings: {
     public: () => api.get('/settings/public'),

@@ -83,6 +83,21 @@ def test_deactivate_blocks_login_but_keeps_row(client, dbsession, org):
     assert refreshed.is_active is False
 
 
+def test_purge_hard_deletes_and_frees_email_for_reuse(client, dbsession, org):
+    sa = _make_user(dbsession, org, email="purge.sa@example.com", role="Superadmin")
+    victim_id = _make_user(dbsession, org, email="freed@example.com", full_name="Victim", role="Player").id
+    headers = _login(client, "purge.sa@example.com")
+
+    res = client.delete(f"/api/v1/users/{victim_id}/purge", headers=headers)
+    assert res.status_code == 204
+
+    # Email is freed: a brand-new account can now be created with it.
+    created = client.post("/api/v1/users", json={
+        "full_name": "New Owner", "email": "freed@example.com", "password": "password123", "role": "Team Manager",
+    }, headers=headers)
+    assert created.status_code == 201
+
+
 def test_non_admin_cannot_access_user_management(client, dbsession, org):
     _make_user(dbsession, org, email="plain@example.com", role="Player")
     headers = _login(client, "plain@example.com")

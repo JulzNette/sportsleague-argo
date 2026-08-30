@@ -25,6 +25,7 @@ export default function UsersPage() {
   const canUpdate = can(role, 'user.update')
   const canReset = can(role, 'user.reset_password')
   const canDelete = can(role, 'user.delete')
+  const canPurge = can(role, 'user.purge')
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['users'] })
 
@@ -45,6 +46,11 @@ export default function UsersPage() {
   })
   const deleteMut = useMutation({
     mutationFn: (id) => endpoints.users.remove(id),
+    onSuccess: () => invalidate(),
+    onError: setError,
+  })
+  const purgeMut = useMutation({
+    mutationFn: (id) => endpoints.users.purge(id),
     onSuccess: () => invalidate(),
     onError: setError,
   })
@@ -86,6 +92,12 @@ export default function UsersPage() {
       label: u => (u.is_active ? 'Deactivate' : 'Activate'),
       icon: 'bi-person-x',
       onClick: (u) => { if (isSelf(u)) return; const action = u.is_active ? 'deactivate' : 'activate'; if (confirm(`Do you want to ${action} "${u.full_name}"?`)) deleteMut.mutate(u.id) },
+    }] : []),
+    ...(canPurge ? [{
+      label: 'Delete forever',
+      icon: 'bi-trash',
+      danger: true,
+      onClick: (u) => { if (isSelf(u)) return; if (confirm(`Permanently delete "${u.full_name}"? This frees their email for reuse and cannot be undone.`)) purgeMut.mutate(u.id) },
     }] : []),
   ]
 

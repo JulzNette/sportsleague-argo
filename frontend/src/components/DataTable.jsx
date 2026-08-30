@@ -41,7 +41,9 @@ export default function DataTable({ columns, rows, actions, emptyLabel = 'No rec
                         key={i}
                         onClick={a.onClick}
                         title={a.label}
-                        className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-100"
+                        className={a.danger
+                          ? "w-7 h-7 inline-flex items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50"
+                          : "w-7 h-7 inline-flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-100"}
                       >
                         <i className={`bi ${a.icon}`} />
                       </button>
