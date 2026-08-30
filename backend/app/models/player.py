@@ -25,5 +25,8 @@ class Player(OrgAuditMixin, Base):
     contact_phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="Active")
     # Active | Inactive | Suspended
+    # Loose link to the Player-role login account (the users table is owned by
+    # another module, so no FK - same convention as created_by/reviewed_by).
+    login_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
 
     team: Mapped["Team"] = relationship(back_populates="players")

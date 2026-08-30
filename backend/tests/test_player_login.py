@@ -141,3 +141,38 @@ def test_manager_sees_only_own_team_and_can_login_own_players(
     admin_names = {p["full_name"] for p in admin_players}
     assert {"Mine", "Rival"} <= admin_names
     assert all(p["login_allowed"] is True for p in admin_players)
+
+
+def test_player_account_sees_only_own_team_mates(client, dbsession, org, season_division_teams):
+    """A Player-role login created for a roster member is scoped to their team:
+    they only see their own team mates on the players list, not other teams."""
+    admin = _make_user(dbsession, org, "admin.scope@example.com", "System Administrator")
+    admin_headers = _login(client, admin.email)
+    _, division, teams = season_division_teams
+    team_a = teams["A"]
+    team_b = teams["B"]
+
+    # Two players on team A and one on team B.
+    mine1 = _add_player(client, admin_headers, team_a.id, "Teammate One", "11")
+    _add_player(client, admin_headers, team_a.id, "Teammate Two", "12")
+    _add_player(client, admin_headers, team_b.id, "Outsider", "21")
+
+    # Create a Player-role login for one of team A's players.
+    created = client.post(f"/api/v1/players/{mine1['id']}/account", json={
+        "email": "teammate.one@example.com", "password": "password123",
+    }, headers=admin_headers)
+    assert created.status_code == 201
+
+    login = client.post("/api/v1/auth/login", json={"email": "teammate.one@example.com", "password": "password123"})
+    assert login.status_code == 200
+    player_headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+    # The Player-role account sees only team A's players (its own team mates).
+    players = client.get("/api/v1/players", headers=player_headers).json()
+    names = {p["full_name"] for p in players}
+    assert names == {"Teammate One", "Teammate Two"}
+    assert "Outsider" not in names
+
+    # They cannot view a player from another team directly either.
+    outsider = next(p for p in client.get("/api/v1/players", headers=admin_headers).json() if p["full_name"] == "Outsider")
+    assert client.get(f"/api/v1/players/{outsider['id']}", headers=player_headers).status_code == 403

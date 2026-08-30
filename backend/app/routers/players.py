@@ -14,33 +14,46 @@ from app.services import crud
 router = APIRouter(prefix="/players", tags=["Players"])
 
 TEAM_MANAGER = "Team Manager"
+PLAYER = "Player"
 
 
-def _manager_team_ids(db: Session, user: CurrentUser):
-    """Teams this Team Manager owns, derived from the approved registrations they
-    submitted (created_by == their account) - the same ownership convention the
-    registration workflow uses to scope a manager's view."""
-    if user.role != TEAM_MANAGER:
-        return None
-    ids: set[uuid.UUID] = set()
-    regs = db.query(Registration).filter(
-        Registration.organization_id == user.organization_id,
-        Registration.created_by == user.id,
-        Registration.status == "Approved",
-    ).all()
-    for reg in regs:
-        team = db.query(Team).filter(
-            Team.organization_id == user.organization_id,
-            Team.division_id == reg.division_id,
-            Team.name == reg.team_name,
-        ).first()
-        if team is not None:
-            ids.add(team.id)
-    return ids
+def _team_ids_for(db: Session, user: CurrentUser):
+    """Team IDs this user is scoped to, or None if they can see the whole org.
+
+    - Team Manager: teams from the approved registrations they submitted
+      (created_by == their account) - the ownership convention the registration
+      workflow uses to scope a manager's view.
+    - Player (view-only login created from a roster member): the single team of
+      the roster Player they were created from (linked via Player.login_user_id).
+    - Everyone else: no scoping (returns None).
+    """
+    if user.role == TEAM_MANAGER:
+        ids: set[uuid.UUID] = set()
+        regs = db.query(Registration).filter(
+            Registration.organization_id == user.organization_id,
+            Registration.created_by == user.id,
+            Registration.status == "Approved",
+        ).all()
+        for reg in regs:
+            team = db.query(Team).filter(
+                Team.organization_id == user.organization_id,
+                Team.division_id == reg.division_id,
+                Team.name == reg.team_name,
+            ).first()
+            if team is not None:
+                ids.add(team.id)
+        return ids
+    if user.role == PLAYER:
+        linked = db.query(Player).filter(
+            Player.organization_id == user.organization_id,
+            Player.login_user_id == user.id,
+        ).all()
+        return {p.team_id for p in linked}
+    return None
 
 
 def _ensure_player_allowed(db: Session, user: CurrentUser, player: Player) -> None:
-    own = _manager_team_ids(db, user)
+    own = _team_ids_for(db, user)
     if own is not None and player.team_id not in own:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -51,7 +64,7 @@ def _ensure_player_allowed(db: Session, user: CurrentUser, player: Player) -> No
 def _login_allowed(db: Session, user: CurrentUser, player: Player) -> bool:
     """Whether the current user may create a login for this player. Admins can
     create for anyone; a Team Manager only for players on their own team."""
-    own = _manager_team_ids(db, user)
+    own = _team_ids_for(db, user)
     if own is None:
         return True
     return player.team_id in own
@@ -70,7 +83,7 @@ def list_players(
     user: CurrentUser = Depends(require_permission("player.view")),
 ):
     players = crud.list_scoped(db, Player, organization_id=user.organization_id, team_id=team_id)
-    own = _manager_team_ids(db, user)
+    own = _team_ids_for(db, user)
     if own is not None:
         players = [p for p in players if p.team_id in own]
     return [_to_out(db, user, p) for p in players]
@@ -91,6 +104,12 @@ def get_player(
     user: CurrentUser = Depends(require_permission("player.view")),
 ):
     obj = crud.get_scoped_or_404(db, Player, organization_id=user.organization_id, record_id=player_id)
+    own = _team_ids_for(db, user)
+    if own is not None and obj.team_id not in own:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view this player.",
+        )
     return _to_out(db, user, obj)
 
 
@@ -188,6 +207,13 @@ def create_player_account(
     db.add(account)
     db.commit()
     db.refresh(account)
+
+    # Link the Player-role account to this roster member so the account is
+    # scoped to that player's team (they only see their own team mates).
+    player.login_user_id = account.id
+    db.add(player)
+    db.commit()
+
     return PlayerAccountOut(
         player_id=player.id, email=account.email,
         full_name=account.full_name, role=account.role,
