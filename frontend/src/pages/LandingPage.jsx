@@ -90,6 +90,10 @@ export default function LandingPage() {
     queryFn: () => endpoints.matches.publicSchedule().then((r) => r.data),
     refetchInterval: 60000,
   })
+  const { data: prizes = [] } = useQuery({
+    queryKey: ['public-rewards'],
+    queryFn: () => endpoints.settings.public().then((r) => r.data?.rewards ?? []),
+  })
   const fmtTime = (t) => (t ? t.slice(0, 5) : '')
   const fmtDate = (d) => {
     if (!d) return ''
@@ -122,11 +126,10 @@ export default function LandingPage() {
           <span style={{ fontFamily: "'Anton',sans-serif", letterSpacing: '0.04em', fontSize: 14, textTransform: 'uppercase' }}>Moonwalk Hardcourt</span>
         </div>
         <nav className="lp-nav" style={{ display: 'flex', gap: 'clamp(16px,3vw,34px)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-          {[['#about', 'About'], ['#divisions', 'Divisions'], ['#schedule', 'Schedule'], ['#venue', 'Venue']].map(([href, label]) => (
+          {[['#about', 'About'], ['#divisions', 'Divisions'], ['#prizes', 'Prizes'], ['#schedule', 'Schedule'], ['#venue', 'Venue']].map(([href, label]) => (
             <a key={href} href={href} style={{ textDecoration: 'none', color: C.dim }}>{label}</a>
           ))}
           <Link to="/pricing" style={{ textDecoration: 'none', color: C.dim }}>Pricing</Link>
-          <Link to="/rewards" style={{ textDecoration: 'none', color: C.dim }}>Rewards</Link>
         </nav>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Link to="/login" style={{ textDecoration: 'none', color: C.dim, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Sign In</Link>
@@ -255,6 +258,32 @@ export default function LandingPage() {
               <p style={{ color: C.dim, fontSize: 13.5, lineHeight: 1.6 }}>{d.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* PRIZES */}
+      <section id="prizes" style={{ ...SECT, background: C.court }}>
+        <div style={KICKER}>What Winners Take Home<span style={{ flex: 1, height: 1, background: '#E7E4DC' }} /></div>
+        <h2 style={HEAD}>The prizes on the line.</h2>
+        <p style={{ maxWidth: 600, color: C.dim, fontSize: 17, lineHeight: 1.7 }}>Finish on the podium and your squad goes home with more than bragging rights. Top finishers in each division are rewarded for the run.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 18, marginTop: 56 }}>
+          {prizes.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', background: C.panel, border: '1px solid #E7E4DC', borderRadius: 6, padding: '34px 28px', color: C.dim, fontSize: 15, textAlign: 'center' }}>Prize details will be announced closer to tip-off. Check back soon.</div>
+          ) : (
+            prizes.map((p, i) => (
+              <div key={i} style={{ background: C.panel, border: `1px solid #E7E4DC`, borderTop: `3px solid ${i === 0 ? '#F59E0B' : (i === 1 ? '#94A3B8' : '#B45309')}`, borderRadius: 6, padding: '30px 26px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <span style={{ ...DISPLAY, fontSize: 26 }}>{p.place || 'Place'}</span>
+                  <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.dim }}>{p.division || 'Division'}</span>
+                </div>
+                <div style={{ ...MONO, fontSize: 18, color: C.blue, fontWeight: 700 }}>{p.prize || 'TBA'}</div>
+                {p.extra && <div style={{ fontSize: 13.5, color: C.dim, lineHeight: 1.6 }}>{p.extra}</div>}
+              </div>
+            ))
+          )}
+        </div>
+        <div style={{ marginTop: 30 }}>
+          <Link to="/rewards" style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, color: C.blue }}>View full rewards details →</Link>
         </div>
       </section>
 
