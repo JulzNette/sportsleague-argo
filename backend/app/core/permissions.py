@@ -66,7 +66,7 @@ PERMISSIONS: dict[str, list[str]] = {
     "notification.view": _ALL_ROLES,
     "referee.manage": ["League Administrator", *_ADMIN_ROLES],
     "settings.manage": _ADMIN_ROLES,
-    "user.view": _ADMIN_ROLES,
+    "user.view": ["Superadmin"],
     "user.create": ["Superadmin"],
     "user.update": ["Superadmin"],
     "user.delete": ["Superadmin"],

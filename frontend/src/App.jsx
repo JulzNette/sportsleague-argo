@@ -29,7 +29,7 @@ import UsersPage from './pages/UsersPage'
 import SuperadminPage from './pages/SuperadminPage'
 import { endpoints } from './lib/api'
 import { useAuthStore } from './store/authStore'
-import { isAdminRole } from './lib/permissions'
+import { can } from './lib/permissions'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -75,7 +75,7 @@ function RegisterTeamRoute() {
 
 function SuperadminRoute() {
   const role = useAuthStore((s) => s.role)
-  if (!isAdminRole(role)) {
+  if (!can(role, 'user.view')) {
     return <Navigate to="/dashboard" replace />
   }
   return (

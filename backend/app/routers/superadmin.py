@@ -1,5 +1,5 @@
 """
-Superadmin portal summary (System Administrator / Superadmin only).
+Superadmin portal summary (Superadmin only).
 
 This is the read-only command center backing the /superadmin page: one request
 returns every org-wide count plus the registration pipeline and the user role
@@ -48,7 +48,7 @@ def _count(db: Session, model, org_id):
 @router.get("/summary", summary="Org-wide summary for the superadmin portal")
 def superadmin_summary(
     db: Session = Depends(get_db_session),
-    user: CurrentUser = Depends(require_permission("settings.manage")),
+    user: CurrentUser = Depends(require_permission("user.view")),
 ):
     counts = {name: _count(db, model, user.organization_id) for name, model in _TABLES}
     counts["users"] = db.execute(

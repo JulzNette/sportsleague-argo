@@ -53,15 +53,13 @@ def test_superadmin_can_list_create_and_edit_users(client, dbsession, org):
     assert relogin.json()["role"] == "Season Manager"
 
 
-def test_superadmin_can_read_users_but_system_admin_cannot_create(client, dbsession, org):
+def test_system_administrator_cannot_manage_users(client, dbsession, org):
     sa = _make_user(dbsession, org, email="other.sa@example.com", role="Superadmin")
     sysadmin = _make_user(dbsession, org, email="sysadmin@example.com", role="System Administrator")
-    sa_headers = _login(client, "other.sa@example.com")
     sys_headers = _login(client, "sysadmin@example.com")
 
-    assert client.get("/api/v1/users", headers=sys_headers).status_code == 200
-
-    # System Administrator can view but not create/edit/delete users.
+    # System Administrator cannot view or manage user accounts (Superadmin only).
+    assert client.get("/api/v1/users", headers=sys_headers).status_code == 403
     assert client.post("/api/v1/users", json={
         "full_name": "Nope", "email": "nope@example.com", "password": "password123", "role": "Viewer",
     }, headers=sys_headers).status_code == 403

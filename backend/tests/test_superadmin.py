@@ -1,7 +1,6 @@
 """
 Superadmin portal summary: org-wide counts, registration pipeline, and user
-role distribution - only accessible to admin (System Administrator / Superadmin)
-roles.
+role distribution - only accessible to the Superadmin role.
 """
 from app.core.security import hash_password
 from app.models.stub import User
@@ -23,9 +22,9 @@ def _login(client, email):
     return {"Authorization": f"Bearer {res.json()['access_token']}"}
 
 
-def test_admin_can_read_superadmin_summary(client, dbsession, org, season_division_teams):
-    _make_user(dbsession, org, "sysadmin.portal@example.com", "System Administrator")
-    headers = _login(client, "sysadmin.portal@example.com")
+def test_superadmin_can_read_superadmin_summary(client, dbsession, org, season_division_teams):
+    _make_user(dbsession, org, "superadmin.portal@example.com", "Superadmin")
+    headers = _login(client, "superadmin.portal@example.com")
 
     res = client.get("/api/v1/superadmin/summary", headers=headers)
 
@@ -38,12 +37,12 @@ def test_admin_can_read_superadmin_summary(client, dbsession, org, season_divisi
     assert counts["teams"] == 4
     assert counts["users"] == 1
     assert body["registrations"]["pending"] == 0
-    assert body["users_by_role"].get("System Administrator") == 1
+    assert body["users_by_role"].get("Superadmin") == 1
 
 
-def test_non_admin_cannot_read_superadmin_summary(client, dbsession, org):
-    _make_user(dbsession, org, "viewer.portal@example.com", "Viewer")
-    headers = _login(client, "viewer.portal@example.com")
+def test_system_administrator_cannot_read_superadmin_summary(client, dbsession, org):
+    _make_user(dbsession, org, "sysadmin.portal@example.com", "System Administrator")
+    headers = _login(client, "sysadmin.portal@example.com")
 
     res = client.get("/api/v1/superadmin/summary", headers=headers)
 

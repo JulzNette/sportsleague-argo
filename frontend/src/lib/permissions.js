@@ -59,7 +59,7 @@ export const PERMISSIONS = {
   'notification.view': ALL,
   'referee.manage': ['League Administrator', ...ADMIN],
   'settings.manage': ADMIN,
-  'user.view': ADMIN,
+  'user.view': ['Superadmin'],
   'user.create': ['Superadmin'],
   'user.update': ['Superadmin'],
   'user.delete': ['Superadmin'],
@@ -69,11 +69,4 @@ export const PERMISSIONS = {
 
 export function can(role, permission) {
   return (PERMISSIONS[permission] || []).includes(role)
-}
-
-// Mirrors backend _ADMIN_ROLES - the org-wide admin roles that get the
-// Superadmin portal.
-export const ADMIN_ROLES = ['System Administrator', 'Superadmin']
-export function isAdminRole(role) {
-  return ADMIN_ROLES.includes(role)
 }
