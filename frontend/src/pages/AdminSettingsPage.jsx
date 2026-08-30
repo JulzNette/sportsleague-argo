@@ -6,6 +6,8 @@ import { useAuthStore } from '../store/authStore'
 import PageHead from '../components/PageHead'
 import ErrorBanner from '../components/ErrorBanner'
 
+const EMPTY_REWARD = { division: '', place: '', prize: '', incentive: '' }
+
 export default function AdminSettingsPage() {
   const role = useAuthStore((s) => s.role)
   const qc = useQueryClient()
@@ -15,9 +17,13 @@ export default function AdminSettingsPage() {
   const settingsQ = useQuery({ queryKey: ['admin-settings'], queryFn: () => endpoints.settings.admin().then((r) => r.data) })
   const s = settingsQ.data || {}
 
-  // Default registration fee
+  // Registration fee
   const [feeInput, setFeeInput] = useState('')
   useEffect(() => { if (s.configured_fee) setFeeInput(String(s.registration_fee)) }, [s.configured_fee, s.registration_fee])
+
+  // Rewards page content
+  const [rewards, setRewards] = useState([])
+  useEffect(() => { setRewards(Array.isArray(s.rewards) ? s.rewards : []) }, [s.rewards])
 
   // Foul-out limit used by the live scoring grid.
   const [foulLimit, setFoulLimit] = useState(5)
@@ -28,6 +34,11 @@ export default function AdminSettingsPage() {
   const feeMut = useMutation({
     mutationFn: (data) => endpoints.settings.setFee(data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-settings'] }); flash('Registration fee saved') },
+    onError: setError,
+  })
+  const contentMut = useMutation({
+    mutationFn: (data) => endpoints.settings.setContent(data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-settings'] }); flash('Rewards content saved') },
     onError: setError,
   })
   const foulLimitMut = useMutation({
@@ -46,7 +57,7 @@ export default function AdminSettingsPage() {
       {error && <ErrorBanner message={error?.message || error?.detail || 'Something went wrong'} onClose={() => setError(null)} />}
       {notice && <div className="card p-3 mb-4 text-sm" style={{ background: '#EFF6FF', borderColor: '#BFDBFE', color: '#1D4ED8' }}>{notice}</div>}
 
-      {/* ===== Default registration fee ===== */}
+      {/* ===== Registration fee ===== */}
       <div className="card p-4 mb-4">
         <h3 className="text-base font-semibold mb-1">Registration fee</h3>
         <p className="text-sm text-gray-500 mb-3">A single fee applied to every team that registers. Registrants pay this amount on the form.</p>
@@ -77,6 +88,32 @@ export default function AdminSettingsPage() {
           <button className="btn btn-primary" disabled={foulLimitMut.isPending || foulLimit === ''}
             onClick={() => foulLimitMut.mutate({ foul_limit: Number(foulLimit) })}>
             {foulLimitMut.isPending ? 'Saving...' : 'Save limit'}
+          </button>
+        </div>
+      </div>
+
+      {/* ===== Rewards page content ===== */}
+      <div className="card p-4 mb-4">
+        <h3 className="text-base font-semibold mb-1">Rewards page content</h3>
+        <p className="text-sm text-gray-500 mb-3">Shown on the public /rewards page, grouped by division. Fields: division, place, prize, incentive.</p>
+        {rewards.map((it, i) => (
+          <div key={i} className="grid gap-2 mb-2" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))' }}>
+            <input className="input" value={it.division || ''}
+              onChange={(e) => setRewards((arr) => arr.map((x, j) => (j === i ? { ...x, division: e.target.value } : x)))} placeholder="Division" />
+            <input className="input" value={it.place || ''}
+              onChange={(e) => setRewards((arr) => arr.map((x, j) => (j === i ? { ...x, place: e.target.value } : x)))} placeholder="Place (Champion)" />
+            <input className="input" value={it.prize || ''}
+              onChange={(e) => setRewards((arr) => arr.map((x, j) => (j === i ? { ...x, prize: e.target.value } : x)))} placeholder="Prize (₱5,000 cash)" />
+            <input className="input" value={it.incentive || ''}
+              onChange={(e) => setRewards((arr) => arr.map((x, j) => (j === i ? { ...x, incentive: e.target.value } : x)))} placeholder="Incentive (trophy)" />
+            <button className="btn btn-sm btn-outline" onClick={() => setRewards((arr) => arr.filter((_, j) => j !== i))}>Remove</button>
+          </div>
+        ))}
+        <button className="btn btn-sm btn-outline mb-3" onClick={() => setRewards((arr) => [...arr, { ...EMPTY_REWARD }])}>+ Add reward</button>
+        <div>
+          <button className="btn btn-primary" disabled={contentMut.isPending}
+            onClick={() => contentMut.mutate({ key: 'rewards_content', items: rewards })}>
+            {contentMut.isPending ? 'Saving...' : 'Save rewards content'}
           </button>
         </div>
       </div>
