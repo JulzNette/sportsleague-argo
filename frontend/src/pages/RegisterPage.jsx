@@ -47,7 +47,7 @@ export default function RegisterPage() {
           setNotice(`A 6-digit verification code was sent to ${email}. Enter it below to finish creating your account.`)
           setEmailNotice(null)
         } else {
-          setEmailNotice('EmailJS template for the verification code is not configured yet — using the on-screen code below for now.')
+          setEmailNotice(`Email not sent: ${delivery.error || 'unknown reason'} — using the on-screen code below for now.`)
           setNotice('A 6-digit verification code is required. Enter it below to finish creating your account.')
         }
       } else {
@@ -91,7 +91,7 @@ export default function RegisterPage() {
           setNotice(`A new verification code was sent to ${email}.`)
           setEmailNotice(null)
         } else {
-          setEmailNotice('EmailJS template for the verification code is not configured yet — using the on-screen code below.')
+          setEmailNotice(`Email not sent: ${delivery.error || 'unknown reason'} — using the on-screen code below.`)
           setNotice('A new verification code is required. Use the code shown below.')
         }
       } else {
