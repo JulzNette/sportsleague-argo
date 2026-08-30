@@ -48,13 +48,29 @@ def _ensure_player_allowed(db: Session, user: CurrentUser, player: Player) -> No
         )
 
 
+def _login_allowed(db: Session, user: CurrentUser, player: Player) -> bool:
+    """Whether the current user may create a login for this player. Admins can
+    create for anyone; a Team Manager only for players on their own team."""
+    own = _manager_team_ids(db, user)
+    if own is None:
+        return True
+    return player.team_id in own
+
+
+def _to_out(db: Session, user: CurrentUser, player: Player) -> PlayerOut:
+    out = PlayerOut.model_validate(player)
+    out.login_allowed = _login_allowed(db, user, player)
+    return out
+
+
 @router.get("", response_model=list[PlayerOut], summary="List Players")
 def list_players(
     team_id: uuid.UUID | None = None,
     db: Session = Depends(get_db_session),
     user: CurrentUser = Depends(require_permission("player.view")),
 ):
-    return crud.list_scoped(db, Player, organization_id=user.organization_id, team_id=team_id)
+    players = crud.list_scoped(db, Player, organization_id=user.organization_id, team_id=team_id)
+    return [_to_out(db, user, p) for p in players]
 
 
 @router.get("/archived", response_model=list[PlayerOut], summary="List Archived Players")
@@ -71,7 +87,8 @@ def get_player(
     db: Session = Depends(get_db_session),
     user: CurrentUser = Depends(require_permission("player.view")),
 ):
-    return crud.get_scoped_or_404(db, Player, organization_id=user.organization_id, record_id=player_id)
+    obj = crud.get_scoped_or_404(db, Player, organization_id=user.organization_id, record_id=player_id)
+    return _to_out(db, user, obj)
 
 
 @router.post("", response_model=PlayerOut, status_code=201, summary="Create Player")
@@ -82,9 +99,9 @@ def create_player(
     db: Session = Depends(get_db_session),
     user: CurrentUser = Depends(require_permission("player.create")),
 ):
-    return crud.create_scoped(
+    return _to_out(db, user, crud.create_scoped(
         db, Player, organization_id=user.organization_id, user_id=user.id, data=payload.model_dump()
-    )
+    ))
 
 
 @router.patch("/{player_id}", response_model=PlayerOut, summary="Update Player")
@@ -95,7 +112,7 @@ def update_player(
     user: CurrentUser = Depends(require_permission("player.update")),
 ):
     obj = crud.get_scoped_or_404(db, Player, organization_id=user.organization_id, record_id=player_id)
-    return crud.update_scoped(db, obj, user_id=user.id, data=payload.model_dump(exclude_unset=True))
+    return _to_out(db, user, crud.update_scoped(db, obj, user_id=user.id, data=payload.model_dump(exclude_unset=True)))
 
 
 @router.delete("/{player_id}", status_code=204, summary="Delete Player")
@@ -117,7 +134,8 @@ def restore_player(
     obj = crud.get_scoped_or_404(
         db, Player, organization_id=user.organization_id, record_id=player_id, include_archived=True
     )
-    return crud.restore_scoped(db, obj)
+    restored = crud.restore_scoped(db, obj)
+    return _to_out(db, user, restored)
 
 
 @router.delete("/{player_id}/purge", status_code=204, summary="Permanently Delete Player")

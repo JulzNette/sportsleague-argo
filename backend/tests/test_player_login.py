@@ -108,3 +108,30 @@ def test_duplicate_email_is_rejected(client, dbsession, org, season_division_tea
         "email": "dup@example.com", "password": "password123",
     }, headers=admin_headers)
     assert second.status_code == 409
+
+
+def test_manager_sees_all_players_but_login_allowed_only_for_own_team(
+    client, dbsession, org, season_division_teams
+):
+    admin = _make_user(dbsession, org, "admin.all@example.com", "System Administrator")
+    manager = _make_user(dbsession, org, "manager.all@example.com", "Team Manager")
+    admin_headers = _login(client, admin.email)
+    manager_headers = _login(client, manager.email)
+    _, division, teams = season_division_teams
+
+    _approve_team_for_manager(client, admin_headers, division.id, manager_headers, "Lions")
+    my_team = next(t for t in client.get("/api/v1/teams", headers=manager_headers).json() if t["name"] == "Lions")
+
+    # Manager's own-team player plus a player on a different team.
+    mine = _add_player(client, manager_headers, my_team["id"], "Mine", "5")
+    other = next(t for t in teams.values() if t.name != "Lions")
+    _add_player(client, admin_headers, other.id, "Rival", "6")
+
+    # The manager sees players across ALL teams...
+    players = client.get(f"/api/v1/players", headers=manager_headers).json()
+    assert {p["full_name"] for p in players} >= {"Mine", "Rival"}
+
+    # ...but login_allowed is only true for their own team's player.
+    by_name = {p["full_name"]: p for p in players}
+    assert by_name["Mine"]["login_allowed"] is True
+    assert by_name["Rival"]["login_allowed"] is False

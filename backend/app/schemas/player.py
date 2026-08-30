@@ -31,7 +31,7 @@ class PlayerUpdate(BaseModel):
 
 
 class PlayerOut(PlayerBase, AuditFieldsOut):
-    pass
+    login_allowed: bool = False
 
 
 class PlayerAccountCreate(BaseModel):

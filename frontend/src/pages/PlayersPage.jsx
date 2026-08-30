@@ -151,7 +151,7 @@ export default function PlayersPage() {
                           {(can(role, 'player.update') || can(role, 'player.delete') || can(role, 'player.login')) && (
                             <td className="px-4 py-2.5 text-right whitespace-nowrap">
                               <div className="flex justify-end gap-1">
-                                {can(role, 'player.login') && (
+                                {p.login_allowed && (
                                   <button onClick={() => openLogin(p)} title="Create login" className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-100">
                                     <i className="bi bi-box-arrow-in-right" />
                                   </button>
