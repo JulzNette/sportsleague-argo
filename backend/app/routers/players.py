@@ -70,6 +70,9 @@ def list_players(
     user: CurrentUser = Depends(require_permission("player.view")),
 ):
     players = crud.list_scoped(db, Player, organization_id=user.organization_id, team_id=team_id)
+    own = _manager_team_ids(db, user)
+    if own is not None:
+        players = [p for p in players if p.team_id in own]
     return [_to_out(db, user, p) for p in players]
 
 

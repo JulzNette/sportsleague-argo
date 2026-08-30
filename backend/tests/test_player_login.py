@@ -110,7 +110,7 @@ def test_duplicate_email_is_rejected(client, dbsession, org, season_division_tea
     assert second.status_code == 409
 
 
-def test_manager_sees_all_players_but_login_allowed_only_for_own_team(
+def test_manager_sees_only_own_team_and_can_login_own_players(
     client, dbsession, org, season_division_teams
 ):
     admin = _make_user(dbsession, org, "admin.all@example.com", "System Administrator")
@@ -127,11 +127,17 @@ def test_manager_sees_all_players_but_login_allowed_only_for_own_team(
     other = next(t for t in teams.values() if t.name != "Lions")
     _add_player(client, admin_headers, other.id, "Rival", "6")
 
-    # The manager sees players across ALL teams...
-    players = client.get(f"/api/v1/players", headers=manager_headers).json()
-    assert {p["full_name"] for p in players} >= {"Mine", "Rival"}
+    # The manager sees ONLY their own team's players...
+    players = client.get("/api/v1/players", headers=manager_headers).json()
+    names = {p["full_name"] for p in players}
+    assert "Mine" in names
+    assert "Rival" not in names
 
-    # ...but login_allowed is only true for their own team's player.
-    by_name = {p["full_name"]: p for p in players}
-    assert by_name["Mine"]["login_allowed"] is True
-    assert by_name["Rival"]["login_allowed"] is False
+    # ...and every visible player allows creating a login.
+    assert all(p["login_allowed"] is True for p in players)
+
+    # Admins still see players across all teams and can create logins for all.
+    admin_players = client.get("/api/v1/players", headers=admin_headers).json()
+    admin_names = {p["full_name"] for p in admin_players}
+    assert {"Mine", "Rival"} <= admin_names
+    assert all(p["login_allowed"] is True for p in admin_players)
