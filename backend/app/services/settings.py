@@ -34,10 +34,18 @@ DEFAULT_REWARDS = [
 
 
 def get_rewards(db: Session, *, organization_id: uuid.UUID) -> list:
-    value = get_setting(db, organization_id=organization_id, key=KEY_REWARDS)
-    if not value:
-        return [dict(item) for item in DEFAULT_REWARDS]
-    return value
+    """Public Rewards page content. Always includes the Champion / 1st / 2nd
+    podium: admin-configured entries are kept, and any trophy place the admin
+    hasn't defined falls back to a sensible default prize - so visitors always
+    see the champion, 1st, and 2nd pricing."""
+    value = get_setting(db, organization_id=organization_id, key=KEY_REWARDS) or []
+
+    existing_places = {(item.get("place") or "").strip().lower() for item in value}
+    merged = list(value)
+    for item in DEFAULT_REWARDS:
+        if (item.get("place") or "").strip().lower() not in existing_places:
+            merged.append(dict(item))
+    return merged
 
 
 def _scalar(value: Decimal | float | int | None) -> float | None:
