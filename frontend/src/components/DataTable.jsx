@@ -39,7 +39,7 @@ export default function DataTable({ columns, rows, actions, emptyLabel = 'No rec
                     {actions(row).map((a, i) => (
                       <button
                         key={i}
-                        onClick={a.onClick}
+                        onClick={() => a.onClick(row)}
                         title={a.label}
                         className={a.danger
                           ? "w-7 h-7 inline-flex items-center justify-center rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50"
