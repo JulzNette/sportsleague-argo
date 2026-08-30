@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { endpoints } from '../lib/api'
 import { can } from '../lib/permissions'
 import { useAuthStore } from '../store/authStore'
@@ -110,6 +111,29 @@ export default function StatisticsPage() {
               />
             ))}
           </div>
+
+          {rows.length > 0 && (
+            <div className="card p-4 mb-6">
+              <h3 className="font-semibold text-sm text-gray-900 mb-1 flex items-center gap-2">
+                <i className="bi bi-bar-chart-line text-emerald-500" /> Points scored vs. allowed
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">Per completed match results, across all teams in the selected season/division.</p>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart
+                  data={rows.slice().sort((a, b) => b.points_for - a.points_for)}
+                  margin={{ top: 4, right: 8, left: -14, bottom: 4 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="team_name" tick={{ fontSize: 11 }} interval={0} angle={-18} textAnchor="end" height={60} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="points_for" name="Points scored" fill="#2563EB" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="points_against" name="Points allowed" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
 
           <DataTable
             columns={[
