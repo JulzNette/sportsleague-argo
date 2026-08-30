@@ -92,22 +92,35 @@ def test_team_manager_cannot_create_login_for_other_team(client, dbsession, org,
     assert blocked.status_code == 403
 
 
-def test_duplicate_email_is_rejected(client, dbsession, org, season_division_teams):
+def test_same_player_account_is_relinked_not_rejected(client, dbsession, org, season_division_teams):
+    """Re-creating a login for the same player+email is idempotent: it re-links
+    the existing account (so pre-deploy accounts can be backfilled) instead of
+    erroring. An email already linked to a DIFFERENT player is still a conflict."""
     admin = _make_user(dbsession, org, "admin.dup@example.com", "Superadmin")
     admin_headers = _login(client, admin.email)
     _, _, teams = season_division_teams
     team_a = teams["A"]
+    team_b = teams["B"]
     player = _add_player(client, admin_headers, team_a.id, "Dup Player", "7")
+    other = _add_player(client, admin_headers, team_b.id, "Other Player", "8")
 
     first = client.post(f"/api/v1/players/{player['id']}/account", json={
         "email": "dup@example.com", "password": "password123",
     }, headers=admin_headers)
     assert first.status_code == 201
 
-    second = client.post(f"/api/v1/players/{player['id']}/account", json={
+    # Same player + same email -> re-link, no error.
+    again = client.post(f"/api/v1/players/{player['id']}/account", json={
         "email": "dup@example.com", "password": "password123",
     }, headers=admin_headers)
-    assert second.status_code == 409
+    assert again.status_code == 201
+    assert again.json()["email"] == "dup@example.com"
+
+    # Same email already linked to a different player -> conflict.
+    stolen = client.post(f"/api/v1/players/{other['id']}/account", json={
+        "email": "dup@example.com", "password": "password123",
+    }, headers=admin_headers)
+    assert stolen.status_code == 409
 
 
 def test_manager_sees_only_own_team_and_can_login_own_players(

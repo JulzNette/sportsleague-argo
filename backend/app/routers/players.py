@@ -190,6 +190,26 @@ def create_player_account(
     email = payload.email.lower()
     existing = db.query(User).filter(User.email == email).first()
     if existing is not None:
+        # Allow re-linking an already-existing same-org Player account (e.g. to
+        # backfill the player link for accounts created before the linking
+        # feature shipped). Only allow it when the account is not already linked
+        # to a different roster member in this org; otherwise it's a conflict.
+        linked_to = db.query(Player).filter(
+            Player.organization_id == user.organization_id,
+            Player.login_user_id == existing.id,
+        ).first()
+        if (
+            existing.organization_id == user.organization_id
+            and existing.role == "Player"
+            and (linked_to is None or linked_to.id == player.id)
+        ):
+            player.login_user_id = existing.id
+            db.add(player)
+            db.commit()
+            return PlayerAccountOut(
+                player_id=player.id, email=existing.email,
+                full_name=existing.full_name, role=existing.role,
+            )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists.",
