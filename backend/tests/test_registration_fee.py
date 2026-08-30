@@ -1,7 +1,7 @@
 """
-Registration fee + payment with the ADMIN-CONFIGURED fee model:
-the amount is the source of truth set by an Administrator (default or per
-division), not something the registrant types in. It is stored on the
+Registration fee + payment with the FLAT ADMIN-CONFIGURED fee model:
+the amount is a single registration fee set by an Administrator, applied to
+every division (per-division overrides are ignored). It is stored on the
 registration, an admin can mark it Paid, and an admin can email the registrant
 (simulated in tests).
 """
@@ -98,7 +98,9 @@ def test_submission_without_configured_fee_is_rejected(client, dbsession, org, s
     assert "registration fee" in res.json()["detail"].lower()
 
 
-def test_division_fee_override_wins_over_default(client, dbsession, org, season_division_teams):
+def test_division_fee_override_ignored_flat_fee_wins(client, dbsession, org, season_division_teams):
+    # The league uses a single flat registration fee; a stored division override
+    # must NOT change what a registrant pays.
     _set_default_fee(dbsession, org, 100)
     _, division, _ = season_division_teams
     _set_division_fee(dbsession, org, division.id, 350)
@@ -108,7 +110,7 @@ def test_division_fee_override_wins_over_default(client, dbsession, org, season_
 
     res = _submit(client, headers, division.id)
     assert res.status_code == 201
-    assert float(res.json()["registration_fee"]) == 350.0
+    assert float(res.json()["registration_fee"]) == 100.0
 
 
 def test_admin_can_mark_payment_paid_and_pending(client, dbsession, org, season_division_teams):
@@ -274,10 +276,12 @@ def test_public_division_fee_resolver(client, dbsession, org, season_division_te
     assert float(res.json()["registration_fee"]) == 100.0
 
 
-def test_public_division_fee_resolver_uses_override(client, dbsession, org, season_division_teams):
+def test_public_division_fee_resolver_ignores_override(client, dbsession, org, season_division_teams):
+    # With a flat fee model, the resolver returns the default fee even when a
+    # division override row exists.
     _set_default_fee(dbsession, org, 100)
     _, division, _ = season_division_teams
     _set_division_fee(dbsession, org, division.id, 700)
     res = client.get(f"/api/v1/settings/public/divisions/{division.id}/fee")
     assert res.status_code == 200
-    assert float(res.json()["registration_fee"]) == 700.0
+    assert float(res.json()["registration_fee"]) == 100.0

@@ -100,20 +100,18 @@ def get_division_fee(
 def resolve_fee(
     db: Session, *, organization_id: uuid.UUID, division_id: uuid.UUID
 ) -> float:
-    """Source of truth for a registration's fee: division override, else global
-    default, else raise a clear 400 so a submission can't slip through unpriced.
+    """Source of truth for a registration's fee: the single default registration
+    fee configured by an administrator (a flat quota applied to every division).
+    Division overrides are intentionally ignored here - the league uses one fee.
     """
-    override = get_division_fee(db, organization_id=organization_id, division_id=division_id)
-    if override is not None:
-        return override
     default_fee = get_default_fee(db, organization_id=organization_id)
     if default_fee is not None:
         return default_fee
     raise HTTPException(
         status_code=http_status.HTTP_400_BAD_REQUEST,
         detail=(
-            "No registration fee is configured. An administrator must set either a "
-            "default fee or a fee for this division before registration."
+            "No registration fee is configured. An administrator must set a "
+            "default fee before registration."
         ),
     )
 
