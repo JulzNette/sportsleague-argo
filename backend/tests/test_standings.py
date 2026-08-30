@@ -63,11 +63,15 @@ def test_standings_endpoint_returns_table(client, dbsession, org, season_divisio
     t = lambda name: teams[name]
     add_match(season, division, t("A"), t("B"), org_id=org.id, home_score=70, away_score=65)
 
-    reg = client.post("/api/v1/auth/register", json={
+    client.post("/api/v1/auth/register", json={
         "full_name": "Viewer One", "email": "viewer.one@example.com", "password": "password123",
     })
-    assert reg.status_code == 201
-    token = reg.json()["access_token"]
+    from app.services.email_verify import get_code
+    verify = client.post("/api/v1/auth/verify-email", json={
+        "email": "viewer.one@example.com", "code": get_code("viewer.one@example.com"),
+    })
+    assert verify.status_code == 200
+    token = verify.json()["access_token"]
 
     res = client.get(
         "/api/v1/standings",

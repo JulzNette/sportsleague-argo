@@ -10,7 +10,10 @@ export default function RegisterPage() {
   const [contactPhone, setContactPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [code, setCode] = useState('')
+  const [step, setStep] = useState(1) // 1 = details, 2 = email code
   const [error, setError] = useState(null)
+  const [notice, setNotice] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const login = useAuthStore((s) => s.login)
@@ -21,6 +24,7 @@ export default function RegisterPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError(null)
+    setNotice(null)
     const errors = {}
     if (!fullName.trim()) errors.fullName = 'Enter your full name.'
     if (!email.trim()) errors.email = 'Enter your email address.'
@@ -31,9 +35,39 @@ export default function RegisterPage() {
     if (Object.keys(errors).length > 0) return
     setLoading(true)
     try {
-      const res = await endpoints.register({ full_name: fullName, email, contact_phone: contactPhone, password })
+      await endpoints.register({ full_name: fullName, email, contact_phone: contactPhone, password })
+      setNotice('A 6-digit verification code was sent to your email. Enter it below to finish creating your account.')
+      setStep(2)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleVerify(e) {
+    e.preventDefault()
+    setError(null)
+    setNotice(null)
+    setLoading(true)
+    try {
+      const res = await endpoints.verifyEmail({ email, code })
       login({ access_token: res.data.access_token, role: res.data.role, email })
       navigate(next)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResend() {
+    setError(null)
+    setNotice(null)
+    setLoading(true)
+    try {
+      await endpoints.resendVerificationCode({ email })
+      setNotice('A new verification code was sent to your email.')
     } catch (err) {
       setError(err)
     } finally {
@@ -53,37 +87,68 @@ export default function RegisterPage() {
         </div>
 
         <ErrorBanner error={error} />
+        {notice && <div className="mb-3 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2">{notice}</div>}
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="mb-3">
-            <label className="label">Full name</label>
-            <input className={`input ${fieldErrors.fullName ? 'input-error' : ''}`} value={fullName} onChange={(e) => { setFullName(e.target.value); if (fieldErrors.fullName) setFieldErrors((f) => ({ ...f, fullName: undefined })) }} required />
-            {fieldErrors.fullName && <p className="field-error">Please add your full name</p>}
-          </div>
-          <div className="mb-3">
-            <label className="label">Email</label>
-            <input className={`input ${fieldErrors.email ? 'input-error' : ''}`} type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: undefined })) }} required />
-            {fieldErrors.email && <p className="field-error">Please add your email address</p>}
-          </div>
-          <div className="mb-3">
-            <label className="label">Contact number</label>
-            <input className={`input ${fieldErrors.contactPhone ? 'input-error' : ''}`} type="tel" value={contactPhone} onChange={(e) => { setContactPhone(e.target.value); if (fieldErrors.contactPhone) setFieldErrors((f) => ({ ...f, contactPhone: undefined })) }} placeholder="09XX XXX XXXX" />
-            {fieldErrors.contactPhone && <p className="field-error">Please add your contact number</p>}
-          </div>
-          <div className="mb-3">
-            <label className="label">Password</label>
-            <input className={`input ${fieldErrors.password ? 'input-error' : ''}`} type="password" value={password} onChange={(e) => { setPassword(e.target.value); if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: undefined })) }} required />
-            {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
-          </div>
-          <div className="mb-4">
-            <label className="label">Confirm password</label>
-            <input className={`input ${fieldErrors.confirm ? 'input-error' : ''}`} type="password" value={confirm} onChange={(e) => { setConfirm(e.target.value); if (fieldErrors.confirm) setFieldErrors((f) => ({ ...f, confirm: undefined })) }} required />
-            {fieldErrors.confirm && <p className="field-error">{fieldErrors.confirm}</p>}
-          </div>
-          <button className="btn btn-primary w-full justify-center" disabled={loading}>
-            {loading ? 'Creating account...' : 'Create account'}
-          </button>
-        </form>
+        {step === 1 ? (
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="mb-3">
+              <label className="label">Full name</label>
+              <input className={`input ${fieldErrors.fullName ? 'input-error' : ''}`} value={fullName} onChange={(e) => { setFullName(e.target.value); if (fieldErrors.fullName) setFieldErrors((f) => ({ ...f, fullName: undefined })) }} required />
+              {fieldErrors.fullName && <p className="field-error">Please add your full name</p>}
+            </div>
+            <div className="mb-3">
+              <label className="label">Email</label>
+              <input className={`input ${fieldErrors.email ? 'input-error' : ''}`} type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (fieldErrors.email) setFieldErrors((f) => ({ ...f, email: undefined })) }} required />
+              {fieldErrors.email && <p className="field-error">Please add your email address</p>}
+            </div>
+            <div className="mb-3">
+              <label className="label">Contact number</label>
+              <input className={`input ${fieldErrors.contactPhone ? 'input-error' : ''}`} type="tel" value={contactPhone} onChange={(e) => { setContactPhone(e.target.value); if (fieldErrors.contactPhone) setFieldErrors((f) => ({ ...f, contactPhone: undefined })) }} placeholder="09XX XXX XXXX" />
+              {fieldErrors.contactPhone && <p className="field-error">Please add your contact number</p>}
+            </div>
+            <div className="mb-3">
+              <label className="label">Password</label>
+              <input className={`input ${fieldErrors.password ? 'input-error' : ''}`} type="password" value={password} onChange={(e) => { setPassword(e.target.value); if (fieldErrors.password) setFieldErrors((f) => ({ ...f, password: undefined })) }} required />
+              {fieldErrors.password && <p className="field-error">{fieldErrors.password}</p>}
+            </div>
+            <div className="mb-4">
+              <label className="label">Confirm password</label>
+              <input className={`input ${fieldErrors.confirm ? 'input-error' : ''}`} type="password" value={confirm} onChange={(e) => { setConfirm(e.target.value); if (fieldErrors.confirm) setFieldErrors((f) => ({ ...f, confirm: undefined })) }} required />
+              {fieldErrors.confirm && <p className="field-error">{fieldErrors.confirm}</p>}
+            </div>
+            <button className="btn btn-primary w-full justify-center" disabled={loading}>
+              {loading ? 'Creating account...' : 'Create account'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerify} noValidate>
+            <div className="mb-1">
+              <label className="label">Verification code</label>
+              <input
+                className={`input ${fieldErrors.code ? 'input-error' : ''} text-center text-lg tracking-[0.4em]`}
+                value={code}
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="· · · · · ·"
+                onChange={(e) => { setCode(e.target.value.replace(/\D/g, '')); if (fieldErrors.code) setFieldErrors((f) => ({ ...f, code: undefined })) }}
+                required
+              />
+              {fieldErrors.code && <p className="field-error">{fieldErrors.code}</p>}
+            </div>
+            <p className="mb-4 text-sm text-gray-500">
+              We emailed a 6-digit code to <span className="font-semibold text-gray-700">{email}</span>. Enter it to finish signing up.
+            </p>
+            <button className="btn btn-primary w-full justify-center" disabled={loading || code.length !== 6}>
+              {loading ? 'Verifying...' : 'Verify & continue'}
+            </button>
+            <button type="button" className="btn btn-secondary w-full justify-center mt-2" onClick={handleResend} disabled={loading}>
+              Resend code
+            </button>
+            <button type="button" className="btn btn-ghost w-full justify-center mt-1" onClick={() => setStep(1)} disabled={loading}>
+              Back
+            </button>
+          </form>
+        )}
 
         <p className="mt-4 text-center text-sm text-gray-500">
           Already have an account? <Link to="/login" className="text-blue-600 font-semibold">Sign in</Link>

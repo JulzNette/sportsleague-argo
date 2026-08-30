@@ -78,10 +78,15 @@ def test_coach_crud_flow(client, dbsession, org, season_division_teams, admin):
 
 def test_viewer_cannot_manage_coaches(client, dbsession, org, season_division_teams):
     _, _, teams = season_division_teams
-    reg = client.post("/api/v1/auth/register", json={
+    client.post("/api/v1/auth/register", json={
         "full_name": "Read Only", "email": "ro.coach@example.com", "password": "password123",
     })
-    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+    from app.services.email_verify import get_code
+    verify = client.post("/api/v1/auth/verify-email", json={
+        "email": "ro.coach@example.com", "code": get_code("ro.coach@example.com"),
+    })
+    assert verify.status_code == 200
+    headers = {"Authorization": f"Bearer {verify.json()['access_token']}"}
 
     res = client.post("/api/v1/coaches", json={
         "team_id": str(teams["A"].id), "full_name": "Blocked",

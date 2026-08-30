@@ -18,7 +18,12 @@ from app.core.rate_limit import limiter
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_db
 from app.models.stub import Organization, User
-from app.schemas.auth import ChangePasswordRequest, LoginRequest, RegisterRequest, TokenResponse
+from app.schemas.auth import (
+    ChangePasswordRequest, LoginRequest, RegisterRequest, ResendCodeRequest,
+    TokenResponse, VerifyEmailRequest,
+)
+from app.services.email import send_verification_code_email
+from app.services.email_verify import issue_code, verify_code
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -46,13 +51,15 @@ def login_for_docs(request: Request, form_data: OAuth2PasswordRequestForm = Depe
     return TokenResponse(access_token=token, role=user.role)
 
 
-@router.post("/register", response_model=TokenResponse, status_code=201, summary="Create account")
+@router.post("/register", status_code=201, summary="Create account")
 @limiter.limit("3/minute")
 def register(request: Request, payload: RegisterRequest, db: Session = Depends(get_db)):
     """
-    Creates a Team Manager account. A newly signed-up account can register
-    their team (the "register a team" workflow); when an admin approves that
-    registration, the team is created and this user becomes its manager.
+    Creates a Team Manager account and emails a 6-digit verification code to the
+    address supplied. The code must be confirmed via /verify-email before the
+    account can sign in. A newly verified account can register their team (the
+    "register a team" workflow); when an admin approves that registration, the
+    team is created and this user becomes its manager.
     """
     email = payload.email.lower()
     existing = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
@@ -76,6 +83,7 @@ def register(request: Request, payload: RegisterRequest, db: Session = Depends(g
         is_active=True,
     )
     db.add(user)
+    code = issue_code(email)
     try:
         db.commit()
         db.refresh(user)
@@ -83,8 +91,48 @@ def register(request: Request, payload: RegisterRequest, db: Session = Depends(g
         db.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="An account with this email already exists.")
 
+    # No token yet: the person must enter the emailed code before they can
+    # enter the system. If email delivery fails we still created the account,
+    # so the verify step can simply show a "resend code" option.
+    send_verification_code_email(email=email, code=code)
+    return {"detail": "Verification code sent to your email.", "email": email}
+
+
+@router.post("/verify-email", response_model=TokenResponse, summary="Verify email to finish sign-up")
+@limiter.limit("10/minute")
+def verify_email(request: Request, payload: VerifyEmailRequest, db: Session = Depends(get_db)):
+    """
+    Confirms the 6-digit code emailed at registration and returns a token so the
+    user can enter the system. The code is single-use and expires after 10
+    minutes. Requires the account to exist; wrong codes are rate-limited.
+    """
+    email_address = payload.email.lower()
+    user = db.execute(
+        select(User).where(User.email == email_address)
+    ).scalar_one_or_none()
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
+    if not verify_code(email_address, payload.code):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification code.")
+
     token = create_access_token(user_id=user.id, organization_id=user.organization_id, role=user.role)
     return TokenResponse(access_token=token, role=user.role)
+
+
+@router.post("/verify-email/resend", summary="Re-send the verification code")
+@limiter.limit("5/minute")
+def resend_verification_code(request: Request, payload: ResendCodeRequest, db: Session = Depends(get_db)):
+    """Re-issues and re-emails a fresh verification code for an existing account."""
+    email_address = payload.email.lower()
+    user = db.execute(
+        select(User).where(User.email == email_address)
+    ).scalar_one_or_none()
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found.")
+
+    code = issue_code(email_address)
+    send_verification_code_email(email=email_address, code=code)
+    return {"detail": "New verification code sent to your email."}
 
 
 @router.post("/change-password", status_code=204, summary="Change password")

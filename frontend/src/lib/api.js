@@ -39,6 +39,8 @@ api.interceptors.response.use(
 export const endpoints = {
   login: (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
+  verifyEmail: (data) => api.post('/auth/verify-email', data),
+  resendVerificationCode: (data) => api.post('/auth/verify-email/resend', data),
   changePassword: (data) => api.post('/auth/change-password', data),
 
   leagues: {

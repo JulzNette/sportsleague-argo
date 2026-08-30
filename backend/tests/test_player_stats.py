@@ -118,10 +118,15 @@ def test_viewer_cannot_enter_stats(client, dbsession, org, season_division_teams
     season, division, teams = season_division_teams
     match = add_match(season, division, teams["A"], teams["B"], org_id=org.id, home_score=70, away_score=65)
 
-    reg = client.post("/api/v1/auth/register", json={
+    client.post("/api/v1/auth/register", json={
         "full_name": "Read Only", "email": "ro.stat@example.com", "password": "password123",
     })
-    headers = {"Authorization": f"Bearer {reg.json()['access_token']}"}
+    from app.services.email_verify import get_code
+    verify = client.post("/api/v1/auth/verify-email", json={
+        "email": "ro.stat@example.com", "code": get_code("ro.stat@example.com"),
+    })
+    assert verify.status_code == 200
+    headers = {"Authorization": f"Bearer {verify.json()['access_token']}"}
 
     res = client.post(f"/api/v1/matches/{match.id}/stats", json={"lines": [
         {"player_id": str(players[0].id), "points": 1},

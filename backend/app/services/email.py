@@ -107,6 +107,20 @@ def _deliver(subject: str, to: str, body: str) -> dict:
     return {"sent": False, "to": to, "mode": "simulated"}
 
 
+def send_verification_code_email(*, email: str, code: str) -> dict:
+    """Email the 6-digit verification code needed to finish account creation."""
+    subject = "Your verification code"
+    body = (
+        f"Hello,\n\n"
+        f"Your verification code is:\n\n"
+        f"    {code}\n\n"
+        f"Enter this code to finish creating your account. It expires in 10 minutes.\n\n"
+        f"If you didn't request this, you can safely ignore this email.\n\n"
+        f"Thank you,\n{SENDER_NAME} Sports League"
+    )
+    return _deliver(subject, email, body)
+
+
 def send_registration_ack_email(*, team_name: str, manager_email: str) -> dict:
     """Auto-sent to the manager right after they submit a registration."""
     subject = "Registration received — wait for approval"
