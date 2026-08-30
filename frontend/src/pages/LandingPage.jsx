@@ -187,32 +187,55 @@ export default function LandingPage() {
           </div>
           <div style={{ background: C.panel, border: '1px solid #E7E4DC', borderRadius: 6, overflow: 'hidden' }}>
             {schedule.length === 0 ? (
-              <div style={{ padding: '28px 22px', color: C.dim, fontSize: 14 }}>No matches are scheduled yet. Check back soon.</div>
+              <div style={{ padding: '28px 22px', color: C.dim, fontSize: 16 }}>No matches are scheduled yet. Check back soon.</div>
             ) : (
               schedule.map((m, i) => (
-                <div key={m.id || i} className="lp-sched" style={{ display: 'grid', gridTemplateColumns: '110px 1fr auto', gap: 18, alignItems: 'center', padding: '16px clamp(14px,2vw,22px)', borderBottom: i < schedule.length - 1 ? '1px solid #E7E4DC' : 'none' }}>
+                <div key={m.id || i} className="lp-sched" style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 18, alignItems: 'center', padding: '18px clamp(14px,2vw,22px)', borderBottom: i < schedule.length - 1 ? '1px solid #E7E4DC' : 'none' }}>
                   <div>
-                    <span style={{ ...MONO, color: C.accent, fontSize: 13, display: 'block' }}>{fmtDate(m.scheduled_date)}</span>
-                    {m.scheduled_time && <span style={{ ...MONO, color: C.blue, fontSize: 11 }}>{fmtTime(m.scheduled_time)}</span>}
+                    <span style={{ ...MONO, color: C.accent, fontSize: 14.5, display: 'block' }}>{fmtDate(m.scheduled_date)}</span>
+                    {m.scheduled_time && <span style={{ ...MONO, color: C.blue, fontSize: 12.5 }}>{fmtTime(m.scheduled_time)}</span>}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontSize: 17, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {m.home_team} <span style={{ color: C.dim, fontWeight: 500 }}>vs</span> {m.away_team}
                     </div>
                     {(m.home_score != null || m.away_score != null) && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-                        <span style={{ ...MONO, color: C.blue, fontSize: 17, fontWeight: 700 }}>{m.home_score ?? 0} – {m.away_score ?? 0}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
+                        <span style={{ ...MONO, color: C.blue, fontSize: 20, fontWeight: 700 }}>{m.home_score ?? 0} – {m.away_score ?? 0}</span>
                         {m.status === 'In Progress' && (m.minutes != null || m.seconds != null) && (
-                          <span style={{ ...MONO, fontSize: 11, color: C.accent, border: '1px solid #E7E4DC', padding: '2px 7px', borderRadius: 100 }}>
+                          <span style={{ ...MONO, fontSize: 12, color: C.accent, border: '1px solid #E7E4DC', padding: '2px 7px', borderRadius: 100 }}>
                             Q{m.period ?? 1} · {String(m.minutes ?? 0).padStart(2, '0')}:{String(m.seconds ?? 0).padStart(2, '0')}
                           </span>
                         )}
                       </div>
                     )}
                   </div>
-                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', color: statusColor(m.status), border: '1px solid #E7E4DC', padding: '5px 10px', borderRadius: 100, whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.12em', color: statusColor(m.status), border: '1px solid #E7E4DC', padding: '5px 11px', borderRadius: 100, whiteSpace: 'nowrap' }}>
                     {m.status}
                   </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* PRIZES right under the schedule */}
+        <div id="prizes" style={{ position: 'relative', zIndex: 2, margin: 'clamp(28px,5vw,48px) 0 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: C.blue, fontWeight: 700, marginBottom: 14 }}>
+            What Winners Take Home<span style={{ flex: 1, height: 1, background: '#E7E4DC' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 16 }}>
+            {prizes.length === 0 ? (
+              <div style={{ gridColumn: '1 / -1', background: C.panel, border: '1px solid #E7E4DC', borderRadius: 6, padding: '30px 26px', color: C.dim, fontSize: 15, textAlign: 'center' }}>Prize details will be announced closer to tip-off. Check back soon.</div>
+            ) : (
+              prizes.map((p, i) => (
+                <div key={i} style={{ background: C.panel, border: `1px solid #E7E4DC`, borderTop: `3px solid ${i === 0 ? '#F59E0B' : (i === 1 ? '#94A3B8' : '#B45309')}`, borderRadius: 6, padding: '24px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ ...DISPLAY, fontSize: 22 }}>{p.place || 'Place'}</span>
+                    <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.dim, textAlign: 'right' }}>{p.division || 'Division'}</span>
+                  </div>
+                  <div style={{ ...MONO, fontSize: 17, color: C.blue, fontWeight: 700 }}>{p.prize || 'TBA'}</div>
+                  {p.extra && <div style={{ fontSize: 13, color: C.dim, lineHeight: 1.6 }}>{p.extra}</div>}
                 </div>
               ))
             )}
@@ -258,32 +281,6 @@ export default function LandingPage() {
               <p style={{ color: C.dim, fontSize: 13.5, lineHeight: 1.6 }}>{d.desc}</p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* PRIZES */}
-      <section id="prizes" style={{ ...SECT, background: C.court }}>
-        <div style={KICKER}>What Winners Take Home<span style={{ flex: 1, height: 1, background: '#E7E4DC' }} /></div>
-        <h2 style={HEAD}>The prizes on the line.</h2>
-        <p style={{ maxWidth: 600, color: C.dim, fontSize: 17, lineHeight: 1.7 }}>Finish on the podium and your squad goes home with more than bragging rights. Top finishers in each division are rewarded for the run.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))', gap: 18, marginTop: 56 }}>
-          {prizes.length === 0 ? (
-            <div style={{ gridColumn: '1 / -1', background: C.panel, border: '1px solid #E7E4DC', borderRadius: 6, padding: '34px 28px', color: C.dim, fontSize: 15, textAlign: 'center' }}>Prize details will be announced closer to tip-off. Check back soon.</div>
-          ) : (
-            prizes.map((p, i) => (
-              <div key={i} style={{ background: C.panel, border: `1px solid #E7E4DC`, borderTop: `3px solid ${i === 0 ? '#F59E0B' : (i === 1 ? '#94A3B8' : '#B45309')}`, borderRadius: 6, padding: '30px 26px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                  <span style={{ ...DISPLAY, fontSize: 26 }}>{p.place || 'Place'}</span>
-                  <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.dim }}>{p.division || 'Division'}</span>
-                </div>
-                <div style={{ ...MONO, fontSize: 18, color: C.blue, fontWeight: 700 }}>{p.prize || 'TBA'}</div>
-                {p.extra && <div style={{ fontSize: 13.5, color: C.dim, lineHeight: 1.6 }}>{p.extra}</div>}
-              </div>
-            ))
-          )}
-        </div>
-        <div style={{ marginTop: 30 }}>
-          <Link to="/rewards" style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, color: C.blue }}>View full rewards details →</Link>
         </div>
       </section>
 
