@@ -199,7 +199,7 @@ export default function LandingPage() {
                     <div style={{ fontSize: 17, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {m.home_team} <span style={{ color: C.dim, fontWeight: 500 }}>vs</span> {m.away_team}
                     </div>
-                    {(m.home_score != null || m.away_score != null) && (
+                    {m.status !== 'Scheduled' && (m.home_score != null || m.away_score != null) && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
                         <span style={{ ...MONO, color: C.blue, fontSize: 20, fontWeight: 700 }}>{m.home_score ?? 0} – {m.away_score ?? 0}</span>
                         {m.status === 'In Progress' && (m.minutes != null || m.seconds != null) && (
