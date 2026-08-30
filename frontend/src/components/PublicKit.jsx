@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 export const C = {
@@ -41,19 +42,47 @@ function Logo() {
 }
 
 export function PublicHeader() {
+  const [menuOpen, setMenuOpen] = useState(false)
   return (
-    <header style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px clamp(20px,5vw,64px)', background: 'rgba(255,255,255,0.86)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #E7E4DC' }}>
-      <Link to="/" style={{ textDecoration: 'none', color: C.chalk }}><Logo /></Link>
-      <nav className="lp-nav" style={{ display: 'flex', gap: 'clamp(16px,3vw,30px)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-        {NAV_ANCHORS.map(([href, label]) => (
-          <Link key={href} to={href} style={{ textDecoration: 'none', color: C.dim }}>{label}</Link>
-        ))}
-      </nav>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <Link to="/login" style={{ textDecoration: 'none', color: C.dim, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Sign In</Link>
-        <Link to="/register?next=/register-team" style={{ display: 'inline-flex', alignItems: 'center', padding: '11px 20px', background: C.blue, color: '#fff', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', borderRadius: 2, textDecoration: 'none' }}>Register</Link>
-      </div>
-    </header>
+    <>
+      <style>{`
+        .pk-hamburger { display: none; }
+        @media (max-width: 767px) {
+          .pk-nav { display: none !important; }
+          .pk-hamburger { display: inline-flex !important; }
+        }
+      `}</style>
+      <header style={{ position: 'sticky', top: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px clamp(20px,5vw,64px)', background: 'rgba(255,255,255,0.86)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #E7E4DC' }}>
+        <Link to="/" style={{ textDecoration: 'none', color: C.chalk }}><Logo /></Link>
+        <nav className="pk-nav" style={{ display: 'flex', gap: 'clamp(16px,3vw,30px)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+          {NAV_ANCHORS.map(([href, label]) => (
+            <Link key={href} to={href} style={{ textDecoration: 'none', color: C.dim }}>{label}</Link>
+          ))}
+        </nav>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button
+            className="pk-hamburger"
+            aria-label="Toggle menu"
+            onClick={() => setMenuOpen((v) => !v)}
+            style={{ alignItems: 'center', justifyContent: 'center', width: 42, height: 42, border: '1px solid #E7E4DC', borderRadius: 6, background: '#fff', color: '#111827', cursor: 'pointer', fontSize: 20 }}
+          >
+            <i className={`bi ${menuOpen ? 'bi-x-lg' : 'bi-list'}`} />
+          </button>
+          <Link to="/login" style={{ textDecoration: 'none', color: C.dim, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Sign In</Link>
+          <Link to="/register?next=/register-team" style={{ display: 'inline-flex', alignItems: 'center', padding: '11px 20px', background: C.blue, color: '#fff', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', borderRadius: 2, textDecoration: 'none' }}>Register</Link>
+        </div>
+      </header>
+      {menuOpen && (
+        <div style={{ borderBottom: '1px solid #E7E4DC', background: '#fff', padding: '6px clamp(20px,5vw,64px) 18px', display: 'flex', flexDirection: 'column' }}>
+          {NAV_ANCHORS.map(([href, label], i) => (
+            <div key={href}>
+              {i > 0 && <div style={{ height: 1, background: '#E7E4DC', margin: '4px 0' }} />}
+              <Link to={href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '12px 0', textDecoration: 'none', color: '#111827', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{label}</Link>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   )
 }
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { endpoints } from '../lib/api'
@@ -85,6 +85,15 @@ const HEAD = { ...DISPLAY, fontSize: 'clamp(34px,5.5vw,64px)', maxWidth: '14ch',
 const SECT = { padding: 'clamp(70px,10vw,130px) clamp(20px,5vw,64px)', position: 'relative' }
 
 export default function LandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const NAV = [
+    { href: '#about', label: 'About', external: true },
+    { href: '#divisions', label: 'Divisions', external: true },
+    { href: '#prizes', label: 'Prizes', external: true },
+    { href: '#schedule', label: 'Schedule', external: true },
+    { href: '#venue', label: 'Venue', external: true },
+    { href: '/pricing', label: 'Pricing', external: false },
+  ]
   const { data: schedule = [] } = useQuery({
     queryKey: ['public-matches'],
     queryFn: () => endpoints.matches.publicSchedule().then((r) => r.data),
@@ -107,8 +116,10 @@ export default function LandingPage() {
   return (
     <div style={{ background: C.ink, color: C.chalk, fontFamily: "'Work Sans', sans-serif", overflowX: 'hidden' }}>
       <style>{`
+        .lp-hamburger { display: none; }
         @media (max-width: 767px) {
           .lp-nav { display: none !important; }
+          .lp-hamburger { display: inline-flex !important; }
           .lp-sched {
             grid-template-columns: 1fr !important;
             gap: 10px !important;
@@ -126,16 +137,40 @@ export default function LandingPage() {
           <span style={{ fontFamily: "'Anton',sans-serif", letterSpacing: '0.04em', fontSize: 14, textTransform: 'uppercase' }}>Moonwalk Hardcourt</span>
         </div>
         <nav className="lp-nav" style={{ display: 'flex', gap: 'clamp(16px,3vw,34px)', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-          {[['#about', 'About'], ['#divisions', 'Divisions'], ['#prizes', 'Prizes'], ['#schedule', 'Schedule'], ['#venue', 'Venue']].map(([href, label]) => (
-            <a key={href} href={href} style={{ textDecoration: 'none', color: C.dim }}>{label}</a>
+          {NAV.map((item) => item.external ? (
+            <a key={item.href} href={item.href} style={{ textDecoration: 'none', color: C.dim }}>{item.label}</a>
+          ) : (
+            <Link key={item.href} to={item.href} style={{ textDecoration: 'none', color: C.dim }}>{item.label}</Link>
           ))}
-          <Link to="/pricing" style={{ textDecoration: 'none', color: C.dim }}>Pricing</Link>
         </nav>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button
+            className="lp-hamburger"
+            aria-label="Toggle menu"
+            onClick={() => setMenuOpen((v) => !v)}
+            style={{ alignItems: 'center', justifyContent: 'center', width: 42, height: 42, border: '1px solid #E7E4DC', borderRadius: 6, background: '#fff', color: '#111827', cursor: 'pointer', fontSize: 20 }}
+          >
+            <i className={`bi ${menuOpen ? 'bi-x-lg' : 'bi-list'}`} />
+          </button>
           <Link to="/login" style={{ textDecoration: 'none', color: C.dim, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>Sign In</Link>
           <Link to="/register?next=/register-team" style={{ display: 'inline-flex', alignItems: 'center', padding: '11px 20px', background: C.blue, color: '#fff', fontWeight: 700, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', borderRadius: 2, textDecoration: 'none', border: '2px solid transparent' }}>Register</Link>
         </div>
       </header>
+
+      {menuOpen && (
+        <div style={{ borderBottom: '1px solid #E7E4DC', background: '#fff', padding: '6px clamp(20px,5vw,64px) 18px', display: 'flex', flexDirection: 'column' }}>
+          {NAV.map((item, i) => (
+            <div key={item.href}>
+              {i > 0 && <div style={{ height: 1, background: '#E7E4DC', margin: '4px 0' }} />}
+              {item.external ? (
+                <a href={item.href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '12px 0', textDecoration: 'none', color: '#111827', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{item.label}</a>
+              ) : (
+                <Link to={item.href} onClick={() => setMenuOpen(false)} style={{ display: 'block', padding: '12px 0', textDecoration: 'none', color: '#111827', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{item.label}</Link>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* HERO */}
       <section style={{ position: 'relative', padding: 'clamp(48px,9vw,110px) clamp(20px,5vw,64px) 0', minHeight: '92vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
