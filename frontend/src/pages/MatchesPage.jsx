@@ -38,6 +38,7 @@ export default function MatchesPage() {
   const [statusChoice, setStatusChoice] = useState('')
   const [error, setError] = useState(null)
   const [sportFilter, setSportFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [statsForm, setStatsForm] = useState({})
 
   const { data: matchStats } = useQuery({
@@ -62,6 +63,19 @@ export default function MatchesPage() {
   const refereeName = (id) => referees?.find((r) => r.id === id)?.full_name || 'Unassigned'
 
   const visibleMatches = sportFilter ? matches?.filter((m) => sportOf.division(m.division_id) === sportFilter) : matches
+
+  // Arrange matches by status so scheduled / in-progress / completed are not
+  // jumbled together: In Progress -> Scheduled -> Completed, then by date.
+  const STATUS_ORDER = ['In Progress', 'Scheduled', 'Completed']
+  const sortedMatches = (visibleMatches || []).slice().sort((a, b) => {
+    const ia = STATUS_ORDER.indexOf(a.status)
+    const ib = STATUS_ORDER.indexOf(b.status)
+    const ra = ia === -1 ? STATUS_ORDER.length : ia
+    const rb = ib === -1 ? STATUS_ORDER.length : ib
+    if (ra !== rb) return ra - rb
+    return `${a.scheduled_date} ${a.scheduled_time}`.localeCompare(`${b.scheduled_date} ${b.scheduled_time}`)
+  })
+  const shownRows = statusFilter ? sortedMatches.filter((m) => m.status === statusFilter) : sortedMatches
 
   const resultSummary = (m) => {
     const res = m.result
@@ -114,6 +128,17 @@ export default function MatchesPage() {
               <SportFilter sports={sports} value={sportFilter} onChange={setSportFilter} />
             </div>
           )}
+          <div className="flex gap-2 flex-wrap mb-4">
+            {[['', 'All'], ['In Progress', 'In Progress'], ['Scheduled', 'Scheduled'], ['Completed', 'Completed']].map(([val, label]) => (
+              <button
+                key={val}
+                className={`btn btn-sm ${statusFilter === val ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setStatusFilter(val)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <DataTable
             columns={[
               { key: 'matchup', label: 'Matchup', render: (r) => {
@@ -136,7 +161,7 @@ export default function MatchesPage() {
               { key: 'referee_id', label: 'Referee', render: (r) => refereeName(r.referee_id) },
               { key: 'status', label: 'Status', render: (r) => <Badge status={r.status} /> },
             ]}
-            rows={visibleMatches}
+            rows={shownRows}
             actions={(row) => [
               ...(can(role, 'match.update') ? [{ label: 'Change status', icon: 'bi-arrow-repeat', onClick: () => openStatus(row) }] : []),
               ...(can(role, 'result.submit') && !row.result && ['In Progress', 'Scheduled'].includes(row.status) ? [{ label: 'Submit result', icon: 'bi-clipboard-check', onClick: () => openResult(row) }] : []),
