@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { endpoints } from '../lib/api'
+import { sendVerificationEmail } from '../lib/email'
 import { useAuthStore } from '../store/authStore'
 import ErrorBanner from '../components/ErrorBanner'
 
@@ -15,6 +16,7 @@ export default function RegisterPage() {
   const [error, setError] = useState(null)
   const [notice, setNotice] = useState(null)
   const [simulatedCode, setSimulatedCode] = useState(null)
+  const [emailNotice, setEmailNotice] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const login = useAuthStore((s) => s.login)
@@ -37,8 +39,20 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       const res = await endpoints.register({ full_name: fullName, email, contact_phone: contactPhone, password })
-      setNotice('A 6-digit verification code was sent to your email. Enter it below to finish creating your account.')
-      setSimulatedCode(res.data.verification_code || null)
+      const code = res.data.verification_code || null
+      setSimulatedCode(code)
+      if (code) {
+        const delivery = await sendVerificationEmail(email, code)
+        if (delivery.sent) {
+          setNotice(`A 6-digit verification code was sent to ${email}. Enter it below to finish creating your account.`)
+          setEmailNotice(null)
+        } else {
+          setEmailNotice('EmailJS template for the verification code is not configured yet — using the on-screen code below for now.')
+          setNotice('A 6-digit verification code is required. Enter it below to finish creating your account.')
+        }
+      } else {
+        setNotice('A 6-digit verification code was sent to your email. Enter it below to finish creating your account.')
+      }
       setStep(2)
     } catch (err) {
       setError(err)
@@ -69,8 +83,20 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       const res = await endpoints.resendVerificationCode({ email })
-      setNotice('A new verification code was sent to your email.')
-      setSimulatedCode(res.data.verification_code || null)
+      const code = res.data.verification_code || null
+      setSimulatedCode(code)
+      if (code) {
+        const delivery = await sendVerificationEmail(email, code)
+        if (delivery.sent) {
+          setNotice(`A new verification code was sent to ${email}.`)
+          setEmailNotice(null)
+        } else {
+          setEmailNotice('EmailJS template for the verification code is not configured yet — using the on-screen code below.')
+          setNotice('A new verification code is required. Use the code shown below.')
+        }
+      } else {
+        setNotice('A new verification code was sent to your email.')
+      }
     } catch (err) {
       setError(err)
     } finally {
@@ -91,6 +117,7 @@ export default function RegisterPage() {
 
         <ErrorBanner error={error} />
         {notice && <div className="mb-3 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2">{notice}</div>}
+        {emailNotice && <div className="mb-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">{emailNotice}</div>}
 
         {step === 1 ? (
           <form onSubmit={handleSubmit} noValidate>
@@ -143,7 +170,7 @@ export default function RegisterPage() {
             </p>
             {simulatedCode && (
               <div className="mb-4 text-center text-sm bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-3 py-2">
-                <div className="font-semibold mb-1">No email provider is configured for this demo.</div>
+                <div className="font-semibold mb-1">Your code (email delivery not set up yet)</div>
                 <div className="text-2xl font-bold tracking-[0.3em] text-gray-900">{simulatedCode}</div>
                 <div className="mt-1 text-xs text-amber-700">Enter this code to continue.</div>
               </div>

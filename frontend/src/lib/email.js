@@ -11,8 +11,9 @@
 import emailjs from '@emailjs/browser'
 
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID
-const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_FEE
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+const TEMPLATE_ID_FEE = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_FEE
+const TEMPLATE_ID_VERIFY = import.meta.env.VITE_EMAILJS_TEMPLATE_ID_VERIFY
 
 /**
  * Send the registration-fee reminder to the Team Manager.
@@ -30,15 +31,35 @@ export async function sendFeeReminder(r) {
     registration_status: r?.status,
   }
 
-  if (!SERVICE_ID || !PUBLIC_KEY || !TEMPLATE_ID) {
+  if (!SERVICE_ID || !PUBLIC_KEY || !TEMPLATE_ID_FEE) {
     console.info('[emailjs] fee template not configured — would send:', variables)
     return { sent: false, error: 'EmailJS not configured' }
   }
   try {
-    await emailjs.send(SERVICE_ID, TEMPLATE_ID, variables, { publicKey: PUBLIC_KEY })
+    await emailjs.send(SERVICE_ID, TEMPLATE_ID_FEE, variables, { publicKey: PUBLIC_KEY })
     return { sent: true, error: null }
   } catch (err) {
     console.error('[emailjs] fee reminder send failed:', err)
+    return { sent: false, error: err?.message || 'EmailJS send failed' }
+  }
+}
+
+/**
+ * Send the 6-digit email-verification code to the address typed at sign-up.
+ * Uses the same EmailJS service as the fee reminder, so the code is delivered
+ * for real from the browser with no SMTP/domain setup. Callers get {sent,error}.
+ */
+export async function sendVerificationEmail(to_email, verification_code) {
+  if (!SERVICE_ID || !PUBLIC_KEY || !TEMPLATE_ID_VERIFY) {
+    console.info('[emailjs] verify template not configured — would send:', { to_email, verification_code })
+    return { sent: false, error: 'EmailJS verify template not configured' }
+  }
+  const variables = { to_email, verification_code }
+  try {
+    await emailjs.send(SERVICE_ID, TEMPLATE_ID_VERIFY, variables, { publicKey: PUBLIC_KEY })
+    return { sent: true, error: null }
+  } catch (err) {
+    console.error('[emailjs] verification email send failed:', err)
     return { sent: false, error: err?.message || 'EmailJS send failed' }
   }
 }
