@@ -13,8 +13,6 @@ import Badge from '../components/Badge'
 import ErrorBanner from '../components/ErrorBanner'
 import { SportBadge } from '../components/SportControls'
 
-const FILTERS = ['', 'Pending', 'Approved', 'Rejected']
-
 export default function RegistrationsPage() {
   const role = useAuthStore((s) => s.role)
   const qc = useQueryClient()
@@ -89,7 +87,16 @@ export default function RegistrationsPage() {
     </span>
   )
 
-  const visible = statusFilter ? registrations?.filter((r) => r.status === statusFilter) : registrations
+  const STATUS_ORDER = ['Pending', 'Approved', 'Rejected']
+  const sortedRows = (registrations || []).slice().sort((a, b) => {
+    const ia = STATUS_ORDER.indexOf(a.status)
+    const ib = STATUS_ORDER.indexOf(b.status)
+    const ra = ia === -1 ? STATUS_ORDER.length : ia
+    const rb = ib === -1 ? STATUS_ORDER.length : ib
+    if (ra !== rb) return ra - rb
+    return new Date(b.created_at) - new Date(a.created_at)
+  })
+  const visible = statusFilter ? sortedRows.filter((r) => r.status === statusFilter) : sortedRows
 
   function openDetail(r) { setSelected(r); setComment(''); setError(null); setMailNotice(null) }
   function handleApprove() { if (selected) reviewMut.mutate({ id: selected.id, data: { status: 'Approved', review_comment: comment || null } }) }
@@ -129,11 +136,16 @@ export default function RegistrationsPage() {
 
       {isLoading ? <p className="text-sm text-gray-500">Loading...</p> : (
         <>
-          <div className="card p-3.5 mb-4 flex gap-3 items-center flex-wrap">
-            <label className="text-sm font-medium text-gray-700">Status</label>
-            <select className="input w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              {FILTERS.map((f) => <option key={f} value={f}>{f === '' ? 'All statuses' : f}</option>)}
-            </select>
+          <div className="flex gap-2 flex-wrap mb-4">
+            {[['', 'All'], ['Pending', 'Pending'], ['Approved', 'Approved'], ['Rejected', 'Rejected']].map(([val, label]) => (
+              <button
+                key={val}
+                className={`btn btn-sm ${statusFilter === val ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setStatusFilter(val)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
           <DataTable
             columns={[
