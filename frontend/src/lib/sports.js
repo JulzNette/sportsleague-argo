@@ -16,6 +16,17 @@ export const SPORTS = [
   'Other',
 ]
 
+// Basketball playing positions used in the player / roster forms.
+export const BASKETBALL_POSITIONS = [
+  'Point Guard',
+  'Shooting Guard',
+  'Small Forward',
+  'Power Forward',
+  'Center',
+  'Guard',
+  'Forward',
+]
+
 // Colored badge classes (see .badge-sport-* in index.css) so each sport is
 // visually distinct when leagues of different sports are shown together.
 export const SPORT_BADGE = {

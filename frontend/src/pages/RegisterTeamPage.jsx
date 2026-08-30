@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { endpoints } from '../lib/api'
-import { buildSportMaps } from '../lib/sports'
+import { buildSportMaps, BASKETBALL_POSITIONS } from '../lib/sports'
 import { SportBadge } from '../components/SportControls'
 import PageHead from '../components/PageHead'
 import ErrorBanner from '../components/ErrorBanner'
@@ -304,9 +304,12 @@ export default function RegisterTeamPage({ standalone = false }) {
                 <label className="block"><span className="label">Jersey #</span>
                   <input className="input" value={p.jersey_number} onChange={(e) => updatePlayer(i, 'jersey_number', e.target.value)} />
                 </label>
-                <label className="block"><span className="label">Position</span>
-                  <input className="input" value={p.position} onChange={(e) => updatePlayer(i, 'position', e.target.value)} />
-                </label>
+<label className="block"><span className="label">Position</span>
+  <select className="input" value={p.position} onChange={(e) => updatePlayer(i, 'position', e.target.value)}>
+    <option value="">Select...</option>
+    {BASKETBALL_POSITIONS.map((pos) => <option key={pos} value={pos}>{pos}</option>)}
+  </select>
+</label>
                 <label className="block"><span className="label">Birth date</span>
                   <input type="date" className="input" value={p.date_of_birth} onChange={(e) => updatePlayer(i, 'date_of_birth', e.target.value)} />
                 </label>
