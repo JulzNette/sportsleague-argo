@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { endpoints } from '../lib/api'
 
 const MEDALS = ['🥇', '🥈', '🥉']
+const PLACE_RANK = { champion: 0, '1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5, '6th': 6 }
 
 export default function PrizesPage() {
   const { data = {} } = useQuery({
@@ -31,7 +32,12 @@ export default function PrizesPage() {
               <div className="divide-y divide-gray-100">
                 {entries
                   .slice()
-                  .sort((a, b) => a.place?.toLowerCase().localeCompare(b.place?.toLowerCase()))
+                  .sort((a, b) => {
+                    const ra = PLACE_RANK[a.place?.trim().toLowerCase()] ?? 99
+                    const rb = PLACE_RANK[b.place?.trim().toLowerCase()] ?? 99
+                    if (ra !== rb) return ra - rb
+                    return a.place?.toLowerCase().localeCompare(b.place?.toLowerCase())
+                  })
                   .map((e, i) => (
                     <div key={i} className="px-4 py-3 flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-lg shrink-0">
