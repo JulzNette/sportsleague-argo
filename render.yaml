@@ -23,3 +23,11 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false
+      # Email delivery for the sign-up verification code. Use Brevo (free tier)
+      # because its HTTPS API runs on port 443, which Render's free tier allows
+      # (raw SMTP/587 is blocked). Set these values in the Render dashboard.
+      # BREVO_FROM_EMAIL must be an address you've verified as a sender in Brevo.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_FROM_EMAIL
+        sync: false
