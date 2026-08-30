@@ -141,7 +141,7 @@ export default function Layout({ children }) {
               {bellOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setBellOpen(false)} />
-                  <div className="absolute right-0 top-9 z-50 w-[calc(100vw-2rem)] sm:w-80 max-h-96 overflow-y-auto card !p-0">
+                  <div className="fixed left-2 right-2 top-14 z-50 max-h-[70vh] overflow-y-auto card !p-0 sm:absolute sm:top-9 sm:w-80 sm:left-auto sm:right-0 sm:max-h-96">
                     <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200">
                       <span className="text-sm font-semibold text-gray-900">Notifications</span>
                       {unread?.count > 0 && (
